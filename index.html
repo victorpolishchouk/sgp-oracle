@@ -589,15 +589,29 @@ async function doLogin() {
   const pass  = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display='none';
-  if(!email||!pass){showMsg(errEl,'Заповніть email та пароль');return;}
+  if(!email||!pass){
+    showMsg(errEl,'Заповніть email та пароль');
+    showToast('⚠️ Заповніть email та пароль','error');
+    return;
+  }
   const btn=document.getElementById('loginBtn');
   btn.disabled=true; btn.textContent='…';
   try {
     await auth.signInWithEmailAndPassword(email,pass);
+    showToast('✓ Вхід успішний!','success');
     // onAuthStateChanged handles the rest
   } catch(e) {
-    const msgs={'auth/user-not-found':'Email не знайдено.','auth/wrong-password':'Невірний пароль.','auth/invalid-email':'Некоректний email.','auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.'};
-    showMsg(errEl, msgs[e.code]||e.message);
+    const msgs={
+      'auth/user-not-found':'Email не знайдено.',
+      'auth/wrong-password':'Невірний пароль.',
+      'auth/invalid-email':'Некоректний email.',
+      'auth/invalid-credential':'Невірний email або пароль.',
+      'auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.',
+      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
+    };
+    const msg = msgs[e.code] || e.message;
+    showMsg(errEl, msg);
+    showToast('❌ ' + msg, 'error');
     btn.disabled=false; btn.textContent='УВІЙТИ';
   }
 }
@@ -610,26 +624,48 @@ async function doRegister() {
   const errEl = document.getElementById('regError');
   const okEl  = document.getElementById('regSuccess');
   errEl.style.display='none'; okEl.style.display='none';
-  if(!nick){showMsg(errEl,'Введіть нікнейм.');return;}
-  if(!email||!email.includes('@')){showMsg(errEl,'Некоректний email.');return;}
-  if(pass.length<6){showMsg(errEl,'Пароль мін. 6 символів.');return;}
-  if(pass!==pass2){showMsg(errEl,'Паролі не співпадають.');return;}
-  // Check nickname uniqueness in Firestore
+  if(!nick){
+    showMsg(errEl,'Введіть нікнейм.');
+    showToast('⚠️ Введіть нікнейм','error');
+    return;
+  }
+  if(!email||!email.includes('@')){
+    showMsg(errEl,'Некоректний email.');
+    showToast('⚠️ Некоректний email','error');
+    return;
+  }
+  if(pass.length<6){
+    showMsg(errEl,'Пароль мін. 6 символів.');
+    showToast('⚠️ Пароль мін. 6 символів','error');
+    return;
+  }
+  if(pass!==pass2){
+    showMsg(errEl,'Паролі не співпадають.');
+    showToast('⚠️ Паролі не співпадають','error');
+    return;
+  }
   const btn=document.getElementById('regBtn');
   btn.disabled=true; btn.textContent='…';
   try {
-    const nickSnap = await db.collection('users').where('nickname','==',nick).limit(1).get();
-    if(!nickSnap.empty){showMsg(errEl,'Нікнейм вже зайнятий.');btn.disabled=false;btn.textContent='ЗАРЕЄСТРУВАТИСЬ';return;}
+    // Спочатку створюємо акаунт — після цього юзер авторизований
+    // і Firestore Rules дозволять запис профілю
     const cred = await auth.createUserWithEmailAndPassword(email,pass);
-    // Save user profile to Firestore
     await db.collection('users').doc(cred.user.uid).set({
       nickname:nick, email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     showMsg(okEl,`Ласкаво просимо, ${nick}!`);
+    showToast(`✓ Ласкаво просимо, ${nick}!`,'success');
     // onAuthStateChanged fires automatically
   } catch(e) {
-    const msgs={'auth/email-already-in-use':'Email вже зареєстровано.','auth/weak-password':'Пароль занадто простий.'};
-    showMsg(errEl,msgs[e.code]||e.message);
+    const msgs={
+      'auth/email-already-in-use':'Email вже зареєстровано.',
+      'auth/weak-password':'Пароль занадто простий.',
+      'auth/invalid-email':'Некоректний email.',
+      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
+    };
+    const msg = msgs[e.code] || e.message;
+    showMsg(errEl, msg);
+    showToast('❌ ' + msg,'error');
     btn.disabled=false; btn.textContent='ЗАРЕЄСТРУВАТИСЬ';
   }
 }
