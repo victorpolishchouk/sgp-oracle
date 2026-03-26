@@ -78,7 +78,7 @@
     .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;text-align:left}
     .field label{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.5px}
     .field input{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s;width:100%}
-    .field input:focus{border-color:var(--accent)}
+    .field input:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
     .field input::placeholder{color:var(--muted)}
 
     .btn{font-family:var(--font-head);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:8px;padding:12px 24px;cursor:pointer;transition:all .15s;white-space:nowrap;width:100%}
@@ -107,7 +107,7 @@
     .pred-group-pts{font-family:var(--font-mono);font-size:10px;color:var(--accent2)}
 
     .rider-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:10px 34px 10px 12px;outline:none;transition:border-color .2s;width:100%;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a68' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-    .rider-select:focus{border-color:var(--accent)}
+    .rider-select:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
     .rider-select option{background:var(--card)}
     .rider-select:disabled{opacity:.5;cursor:not-allowed}
 
@@ -252,17 +252,17 @@
         <div id="tabLogin">
           <div class="error-msg" id="loginError"></div>
           <div class="success-msg" id="loginSuccess"></div>
-          <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="твій@email.com"/></div>
-          <div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+          <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="твій@email.com" aria-label="Email для входу" autocomplete="email"/></div>
+          <div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" aria-label="Пароль для входу" autocomplete="current-password"/></div>
           <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">УВІЙТИ</button>
         </div>
         <div id="tabRegister" style="display:none">
           <div class="error-msg" id="regError"></div>
           <div class="success-msg" id="regSuccess"></div>
-          <div class="field"><label>Нікнейм</label><input type="text" id="regNick" placeholder="SuperRider"/></div>
-          <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="твій@email.com"/></div>
-          <div class="field"><label>Пароль</label><input type="password" id="regPass" placeholder="мін. 6 символів"/></div>
-          <div class="field"><label>Повторіть пароль</label><input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+          <div class="field"><label>Нікнейм</label><input type="text" id="regNick" placeholder="SuperRider" aria-label="Нікнейм" autocomplete="username" maxlength="30"/></div>
+          <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="твій@email.com" aria-label="Email для реєстрації" autocomplete="email"/></div>
+          <div class="field"><label>Пароль</label><input type="password" id="regPass" placeholder="мін. 6 символів" aria-label="Пароль" autocomplete="new-password"/></div>
+          <div class="field"><label>Повторіть пароль</label><input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()" aria-label="Повторіть пароль" autocomplete="new-password"/></div>
           <button class="btn btn-primary" id="regBtn" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
         </div>
       </div>
@@ -486,12 +486,14 @@
   </footer>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
 //  FIREBASE INIT
 // ═══════════════════════════════════════════════════════════════
+// SEC-001: API Key публічний — обов'язково обмежте через Google Cloud Console:
+// APIs & Services → Credentials → HTTP referrers: victorpolishchouk.github.io/*
 const firebaseConfig = {
   apiKey:            "AIzaSyDz3LTjBimSnFOjsKWWFV7oJI3q8C2IEFM",
   authDomain:        "sgp-oracle.firebaseapp.com",
@@ -627,6 +629,14 @@ async function doRegister() {
   if(!nick){
     showMsg(errEl,'Введіть нікнейм.');
     showToast('⚠️ Введіть нікнейм','error');
+    return;
+  }
+  // SEC-002: нікнейм — тільки літери, цифри, пробіл, дефіс (2-30 символів). Заборонено HTML/скрипти
+  const nickPattern = /^[a-zA-Z0-9А-ЯҐЄІЇа-яґєіїs\'\-]{2,30}$/;
+  const cleanNick = nick.replace(/\s+/g,' ').trim();
+  if(!nickPattern.test(cleanNick)||/<|>|&|"|\/|script/i.test(cleanNick)){
+    showMsg(errEl,'Нікнейм: 2–30 символів. Тільки літери, цифри, дефіс. Спецсимволи заборонені.');
+    showToast('⚠️ Некоректний нікнейм','error');
     return;
   }
   if(!email||!email.includes('@')){
@@ -860,7 +870,11 @@ function populateSelects() {
 //  FIRESTORE PREDICTIONS
 // ═══════════════════════════════════════════════════════════════
 async function savePrediction() {
-  if(raceLocked){showToast('Прогнози заблоковано!','error');return;}
+  // TC-016/SEC-003: подвійна перевірка lock — і локальна змінна, і час раунду
+  // щоб уникнути обходу через DevTools (raceLocked = false)
+  const _start = new Date(ACTIVE_ROUND.startDatetime);
+  const _locked = raceLocked || !!ACTIVE_ROUND.results || Date.now() >= _start.getTime();
+  if(_locked){showToast('🔒 Прогнози заблоковано!','error');return;}
   if(!currentUser){showToast('Спочатку увійдіть','error');return;}
   const d=getPredictionData();
   const err=validatePrediction(d);
@@ -1156,7 +1170,9 @@ function swcGetPrediction(){const sels=Array.from(document.querySelectorAll('.sw
 function swcValidate(picks){const n=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця.`;}if(new Set(Object.values(picks)).size!==Object.values(picks).length)return'Кожна команда на одному місці.';return null;}
 
 async function swcSavePrediction(){
-  if(swcRaceLocked){showToast('SWC заблоковано!','error');return;}
+  const _swcStart = new Date(SWC_ACTIVE_ROUND.startDatetime);
+  const _swcLocked = swcRaceLocked || !!SWC_ACTIVE_ROUND.results || Date.now() >= _swcStart.getTime();
+  if(_swcLocked){showToast('🔒 SWC заблоковано!','error');return;}
   if(!currentUser){showToast('Спочатку увійдіть','error');return;}
   const picks=swcGetPrediction(),err=swcValidate(picks);
   if(err){showToast(err,'error');return;}
