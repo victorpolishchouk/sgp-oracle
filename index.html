@@ -89,7 +89,7 @@
     .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--text2);color:var(--text)}
 
-    .error-msg{background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
+    .error-msg{background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff8a80;margin-bottom:14px;display:none}
     .success-msg{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:14px;display:none}
 
     .section-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
@@ -589,15 +589,29 @@ async function doLogin() {
   const pass  = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display='none';
-  if(!email||!pass){showMsg(errEl,'Заповніть email та пароль');return;}
+  if(!email||!pass){
+    showMsg(errEl,'Заповніть email та пароль');
+    showToast('⚠️ Заповніть email та пароль','error');
+    return;
+  }
   const btn=document.getElementById('loginBtn');
   btn.disabled=true; btn.textContent='…';
   try {
     await auth.signInWithEmailAndPassword(email,pass);
+    showToast('✓ Вхід успішний!','success');
     // onAuthStateChanged handles the rest
   } catch(e) {
-    const msgs={'auth/user-not-found':'Email не знайдено.','auth/wrong-password':'Невірний пароль.','auth/invalid-email':'Некоректний email.','auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.'};
-    showMsg(errEl, msgs[e.code]||e.message);
+    const msgs={
+      'auth/user-not-found':'Email не знайдено.',
+      'auth/wrong-password':'Невірний пароль.',
+      'auth/invalid-email':'Некоректний email.',
+      'auth/invalid-credential':'Невірний email або пароль.',
+      'auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.',
+      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
+    };
+    const msg = msgs[e.code] || e.message;
+    showMsg(errEl, msg);
+    showToast('❌ ' + msg, 'error');
     btn.disabled=false; btn.textContent='УВІЙТИ';
   }
 }
@@ -610,26 +624,48 @@ async function doRegister() {
   const errEl = document.getElementById('regError');
   const okEl  = document.getElementById('regSuccess');
   errEl.style.display='none'; okEl.style.display='none';
-  if(!nick){showMsg(errEl,'Введіть нікнейм.');return;}
-  if(!email||!email.includes('@')){showMsg(errEl,'Некоректний email.');return;}
-  if(pass.length<6){showMsg(errEl,'Пароль мін. 6 символів.');return;}
-  if(pass!==pass2){showMsg(errEl,'Паролі не співпадають.');return;}
-  // Check nickname uniqueness in Firestore
+  if(!nick){
+    showMsg(errEl,'Введіть нікнейм.');
+    showToast('⚠️ Введіть нікнейм','error');
+    return;
+  }
+  if(!email||!email.includes('@')){
+    showMsg(errEl,'Некоректний email.');
+    showToast('⚠️ Некоректний email','error');
+    return;
+  }
+  if(pass.length<6){
+    showMsg(errEl,'Пароль мін. 6 символів.');
+    showToast('⚠️ Пароль мін. 6 символів','error');
+    return;
+  }
+  if(pass!==pass2){
+    showMsg(errEl,'Паролі не співпадають.');
+    showToast('⚠️ Паролі не співпадають','error');
+    return;
+  }
   const btn=document.getElementById('regBtn');
   btn.disabled=true; btn.textContent='…';
   try {
-    const nickSnap = await db.collection('users').where('nickname','==',nick).limit(1).get();
-    if(!nickSnap.empty){showMsg(errEl,'Нікнейм вже зайнятий.');btn.disabled=false;btn.textContent='ЗАРЕЄСТРУВАТИСЬ';return;}
+    // Спочатку створюємо акаунт — після цього юзер авторизований
+    // і Firestore Rules дозволять запис профілю
     const cred = await auth.createUserWithEmailAndPassword(email,pass);
-    // Save user profile to Firestore
     await db.collection('users').doc(cred.user.uid).set({
       nickname:nick, email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     showMsg(okEl,`Ласкаво просимо, ${nick}!`);
+    showToast(`✓ Ласкаво просимо, ${nick}!`,'success');
     // onAuthStateChanged fires automatically
   } catch(e) {
-    const msgs={'auth/email-already-in-use':'Email вже зареєстровано.','auth/weak-password':'Пароль занадто простий.'};
-    showMsg(errEl,msgs[e.code]||e.message);
+    const msgs={
+      'auth/email-already-in-use':'Email вже зареєстровано.',
+      'auth/weak-password':'Пароль занадто простий.',
+      'auth/invalid-email':'Некоректний email.',
+      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
+    };
+    const msg = msgs[e.code] || e.message;
+    showMsg(errEl, msg);
+    showToast('❌ ' + msg,'error');
     btn.disabled=false; btn.textContent='ЗАРЕЄСТРУВАТИСЬ';
   }
 }
@@ -638,6 +674,25 @@ async function logout() {
   await auth.signOut();
   userNickname='';
   document.getElementById('userPill').style.display='none';
+
+  // BUG1+BUG2: повністю скидаємо форму auth при logout
+  // щоб логін після logout працював і поля реєстрації не були заповнені
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginSuccess').style.display='none';
+  document.getElementById('regNick').value='';
+  document.getElementById('regEmail').value='';
+  document.getElementById('regPass').value='';
+  document.getElementById('regPass2').value='';
+  document.getElementById('regError').style.display='none';
+  document.getElementById('regSuccess').style.display='none';
+  document.getElementById('loginBtn').disabled=false;
+  document.getElementById('loginBtn').textContent='УВІЙТИ';
+  document.getElementById('regBtn').disabled=false;
+  document.getElementById('regBtn').textContent='ЗАРЕЄСТРУВАТИСЬ';
+  switchTab('login');
+
   showScreen('screenAuth');
   showToast('Ви вийшли.');
 }
@@ -655,6 +710,10 @@ auth.onAuthStateChanged(async user=>{
     enterApp();
   } else {
     currentUser=null;
+    // BUG1: скидаємо стан кнопок щоб логін після logout завжди працював
+    const lb=document.getElementById('loginBtn'),rb=document.getElementById('regBtn');
+    if(lb){lb.disabled=false;lb.textContent='УВІЙТИ';}
+    if(rb){rb.disabled=false;rb.textContent='ЗАРЕЄСТРУВАТИСЬ';}
     showScreen('screenAuth');
   }
 });
@@ -755,7 +814,18 @@ function updateActiveRoundHeader() {
 
 function switchRound(id) {
   ACTIVE_ROUND=SEASON.rounds.find(r=>r.id===id);
-  renderRoundSelector(); updateActiveRoundHeader(); populateSelects();
+  renderRoundSelector(); updateActiveRoundHeader();
+
+  // BUG6: скидаємо стан форми перед populateSelects,
+  // щоб disabled з попереднього locked раунду не залишались
+  document.querySelectorAll('.rider-select').forEach(s=>s.disabled=false);
+  const btnSave=document.getElementById('btnSave'),btnClear=document.getElementById('btnClear');
+  if(btnSave){btnSave.disabled=false;btnSave.textContent='💾 ЗБЕРЕГТИ';}
+  if(btnClear)btnClear.disabled=false;
+  document.getElementById('submitZoneTitle').textContent='Готові до збереження?';
+  document.getElementById('submitZoneDesc').textContent='Заповніть всі поля та натисніть «Зберегти».';
+
+  populateSelects();
   raceLocked=false;
   checkRaceStatus().then(()=>{ if(raceLocked)applyLockToForm(); loadUserPrediction(); });
   renderAllPredictions();
@@ -1074,7 +1144,14 @@ function swcRenderTeamForm(){
 }
 
 function swcOnTeamSelect(){const sels=Array.from(document.querySelectorAll('.swc-team-select'));sels.forEach(s=>{const o=new Set(sels.filter(x=>x!==s&&x.value).map(x=>x.value));Array.from(s.options).forEach(opt=>{if(!opt.value)return;opt.disabled=o.has(opt.value);});});swcUpdatePreview();}
-function swcUpdatePreview(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),f=sels.filter(s=>s.value).length,t=sels.length;document.getElementById('swcPreviewFilled').textContent=f;document.getElementById('swcPreviewTotal').textContent=t;document.getElementById('swcSubmitDesc').textContent=f===t?'✓ Всі команди розставлено.':'Розставте всі '+t+' команди ('+(t-f)+' залишилось).';}
+function swcUpdatePreview(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),f=sels.filter(s=>s.value).length,t=sels.length;document.getElementById('swcPreviewFilled').textContent=f;document.getElementById('swcPreviewTotal').textContent=t;document.getElementById('swcSubmitDesc').textContent=f===t?'✓ Всі команди розставлено.':'Розставте всі '+t+' команди ('+(t-f)+' залишилось)';}
+// BUG4: swcClearForm була викликана в HTML але не визначена
+function swcClearForm(){
+  if(swcRaceLocked)return;
+  document.querySelectorAll('.swc-team-select').forEach(s=>{s.value='';});
+  document.querySelectorAll('.swc-team-select option').forEach(o=>o.disabled=false);
+  swcUpdatePreview();
+}
 function swcGetPrediction(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),picks={};sels.forEach((s,i)=>{if(s.value)picks[`rank${i+1}`]=s.value;});return picks;}
 function swcValidate(picks){const n=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця.`;}if(new Set(Object.values(picks)).size!==Object.values(picks).length)return'Кожна команда на одному місці.';return null;}
 
