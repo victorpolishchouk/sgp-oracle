@@ -1,0 +1,172 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Щоденний регресійний тест о 6:00 UTC (8:00 CET)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Ручний запуск з вибором опцій
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - smoke
+          - security
+          - regression
+          - accessibility
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        # Паралельні тести на різних браузерах
+        project: [chromium, firefox, webkit]
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.project }}
+
+      - name: 🔐 Set environment variables
+        run: |
+          echo "BASE_URL=${{ secrets.BASE_URL || 'https://victorpolishchouk.github.io/sgp-oracle/' }}" >> $GITHUB_ENV
+          echo "TEST_EMAIL=${{ secrets.TEST_EMAIL }}" >> $GITHUB_ENV
+          echo "TEST_PASSWORD=${{ secrets.TEST_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: 🧪 Run Playwright tests
+        run: |
+          if [ "${{ github.event.inputs.test_suite }}" == "smoke" ]; then
+            npx playwright test --project=${{ matrix.project }} --grep @smoke
+          elif [ "${{ github.event.inputs.test_suite }}" == "security" ]; then
+            npx playwright test --project=${{ matrix.project }} --grep @security
+          elif [ "${{ github.event.inputs.test_suite }}" == "accessibility" ]; then
+            npx playwright test --project=${{ matrix.project }} --grep @accessibility
+          elif [ "${{ github.event.inputs.test_suite }}" == "regression" ]; then
+            npx playwright test --project=${{ matrix.project }} --grep @regression
+          else
+            npx playwright test --project=${{ matrix.project }}
+          fi
+        env:
+          CI: true
+
+      - name: 📊 Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+      - name: 📹 Upload videos on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos-${{ matrix.project }}
+          path: test-results/**/*.webm
+          retention-days: 7
+
+      - name: 📸 Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots-${{ matrix.project }}
+          path: test-results/**/*.png
+          retention-days: 7
+
+  # Об'єднаний HTML звіт
+  report:
+    name: Generate Test Report
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: ⬇️ Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results
+
+      - name: 📊 Merge test results
+        run: |
+          npx playwright merge-reports --reporter=html ./all-results/playwright-results-*
+
+      - name: 📤 Upload merged HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-merged
+          path: playwright-report/
+          retention-days: 30
+
+      - name: 🌐 Deploy report to GitHub Pages (optional)
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: test-reports/${{ github.run_number }}
+
+  # Slack/Email нотифікації
+  notify:
+    name: Send Notifications
+    needs: [test, report]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📧 Send test results notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: '❌ Playwright Tests Failed - ${{ github.repository }}'
+          to: qa-team@example.com
+          from: GitHub Actions
+          body: |
+            Playwright E2E tests failed!
+            
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}
+            
+            View results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
