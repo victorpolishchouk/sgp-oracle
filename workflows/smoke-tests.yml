@@ -1,0 +1,44 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [main, test, 'feature/**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  smoke:
+    name: Quick Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Chromium only
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run smoke tests
+        run: npx playwright test --project=chromium --grep @smoke
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          CI: true
+      
+      - name: Upload results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: |
+            playwright-report/
+            test-results/
