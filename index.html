@@ -8,212 +8,826 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
 
-  <!-- Firebase SDK v11 (compat — підключається через CDN без bundler) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <style>
     :root {
-      --bg:#0a0a0b;--surface:#111114;--card:#16161a;--border:#2a2a30;
-      --accent:#d4f000;--accent2:#f0c000;--red:#ff3b30;--orange:#ff9500;
-      --green:#30d158;--blue:#0a84ff;--muted:#5a5a68;--text:#e8e8f0;--text2:#9898a8;
-      --font-head:'Barlow Condensed',sans-serif;--font-body:'Barlow',sans-serif;
-      --font-mono:'JetBrains Mono',monospace;--radius:10px;
+      --bg:       #0a0a0b;
+      --surface:  #111114;
+      --card:     #16161a;
+      --border:   #2a2a30;
+      --accent:   #d4f000;
+      --accent2:  #f0c000;
+      --red:      #ff3b30;
+      --orange:   #ff9500;
+      --green:    #30d158;
+      --blue:     #0a84ff;
+      --muted:    #5a5a68;
+      --text:     #e8e8f0;
+      --text2:    #9898a8;
+      --font-head: 'Barlow Condensed', sans-serif;
+      --font-body: 'Barlow', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius:   10px;
     }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(212,240,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(212,240,0,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-    .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 20px 80px}
 
-    header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;flex-wrap:wrap;gap:12px}
-    .logo{display:flex;align-items:baseline;gap:10px}
-    .logo-sgp{font-family:var(--font-head);font-weight:900;font-size:30px;letter-spacing:-.5px;color:var(--accent);line-height:1}
-    .logo-sub{font-family:var(--font-head);font-weight:400;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .comp-switcher{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:3px;gap:2px}
-    .comp-btn{font-family:var(--font-head);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border:none;border-radius:100px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
-    .comp-btn.active-sgp{background:var(--accent);color:#0a0a0b}
-    .comp-btn.active-swc{background:#0a84ff;color:#fff}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
-    .team-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s}
-    .team-card:hover{border-color:#3a3a44}
-    .team-flag{font-size:22px;margin-bottom:4px}
-    .team-name{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text)}
-    .team-riders{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
-    .chip.swc-team{background:rgba(10,132,255,.1);color:#60b5ff;border:1px solid rgba(10,132,255,.2)}
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(212,240,0,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,240,0,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-    .user-pill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:6px 14px 6px 10px;font-size:13px;color:var(--text2)}
-    .user-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+    .wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 0 20px 80px; }
 
-    .race-banner{border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;font-size:13px}
-    .race-banner.open{background:rgba(48,209,88,.07);border:1px solid rgba(48,209,88,.25);color:var(--green)}
-    .race-banner.locked{background:rgba(255,59,48,.07);border:1px solid rgba(255,59,48,.3);color:var(--red)}
-    .race-banner.checking{background:rgba(240,192,0,.07);border:1px solid rgba(240,192,0,.2);color:var(--accent2)}
-    .race-banner-icon{font-size:18px;flex-shrink:0}
-    .race-banner-text{flex:1}
-    .race-banner-text strong{display:block;font-weight:600;margin-bottom:2px}
-    .race-banner a{color:inherit;text-decoration:underline;opacity:.75}
+    /* ──────── HEADER ──────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo { display: flex; align-items: baseline; gap: 10px; }
+    .logo-sgp { font-family: var(--font-head); font-weight: 900; font-size: 30px; letter-spacing: -0.5px; color: var(--accent); line-height: 1; }
+    .logo-sub { font-family: var(--font-head); font-weight: 400; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
 
-    .screen{display:none}
-    .screen.active{display:block}
+    /* ──────── COMPETITION SWITCHER ──────── */
+    .comp-switcher {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .comp-btn {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 100px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .comp-btn.active-sgp { background: var(--accent); color: #0a0a0b; }
+    .comp-btn.active-swc { background: #0a84ff; color: #fff; }
+    .comp-btn:not(.active-sgp):not(.active-swc):hover { color: var(--text); }
 
-    /* Loading overlay */
-    .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
-    .loading-overlay.hidden{display:none}
-    .loading-logo{font-family:var(--font-head);font-size:52px;font-weight:900;color:var(--accent)}
-    .loading-sub{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:2px}
+    /* SWC team cards */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .team-card:hover { border-color: #3a3a44; }
+    .team-card.selected { border-color: #0a84ff; background: rgba(10,132,255,.08); }
+    .team-card.selected .team-name { color: #60b5ff; }
+    .team-flag { font-size: 22px; margin-bottom: 4px; }
+    .team-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); }
+    .team-riders { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .chip.swc-team { background: rgba(10,132,255,.1); color: #60b5ff; border: 1px solid rgba(10,132,255,.2); }
 
-    /* AUTH */
-    .auth-wrap{max-width:420px;margin:60px auto 0;text-align:center}
-    .auth-icon{font-size:52px;margin-bottom:16px}
-    .auth-title{font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--text);margin-bottom:8px}
-    .auth-sub{color:var(--text2);font-size:14px;margin-bottom:32px;line-height:1.6}
-    .auth-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px}
-    .auth-tabs{display:flex;background:var(--surface);border-radius:8px;padding:3px;margin-bottom:22px}
-    .auth-tab{flex:1;padding:8px;border:none;border-radius:6px;background:transparent;color:var(--muted);font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-    .auth-tab.active{background:var(--card);color:var(--text)}
+    .user-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 100px; padding: 6px 14px 6px 10px;
+      font-size: 13px; color: var(--text2);
+    }
+    .user-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 
-    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;text-align:left}
-    .field label{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.5px}
-    .field input{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s;width:100%}
-    .field input:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
-    .field input::placeholder{color:var(--muted)}
+    /* ──────── RACE STATUS BANNER ──────── */
+    .race-banner {
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+    }
+    .race-banner.open {
+      background: rgba(48,209,88,.07);
+      border: 1px solid rgba(48,209,88,.25);
+      color: var(--green);
+    }
+    .race-banner.locked {
+      background: rgba(255,59,48,.07);
+      border: 1px solid rgba(255,59,48,.3);
+      color: var(--red);
+    }
+    .race-banner.checking {
+      background: rgba(240,192,0,.07);
+      border: 1px solid rgba(240,192,0,.2);
+      color: var(--accent2);
+    }
+    .race-banner-icon { font-size: 18px; flex-shrink: 0; }
+    .race-banner-text { flex: 1; }
+    .race-banner-text strong { display: block; font-weight: 600; margin-bottom: 2px; }
+    .race-banner a { color: inherit; text-decoration: underline; opacity: .75; }
 
-    .btn{font-family:var(--font-head);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:8px;padding:12px 24px;cursor:pointer;transition:all .15s;white-space:nowrap;width:100%}
-    .btn-primary{background:var(--accent);color:#0a0a0b}
-    .btn-primary:hover{background:#e8ff00;transform:translateY(-1px);box-shadow:0 4px 20px rgba(212,240,0,.25)}
-    .btn-primary:active{transform:translateY(0)}
-    .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none}
-    .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
-    .btn-ghost:hover{border-color:var(--text2);color:var(--text)}
+    /* ──────── SCREENS ──────── */
+    .screen { display: none; }
+    .screen.active { display: block; }
 
-    .error-msg{background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff8a80;margin-bottom:14px;display:none}
-    .success-msg{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:14px;display:none}
+    /* ──────── AUTH SCREEN ──────── */
+    .auth-wrap {
+      max-width: 420px;
+      margin: 60px auto 0;
+      text-align: center;
+    }
+    .auth-icon { font-size: 52px; margin-bottom: 16px; }
+    .auth-title { font-family: var(--font-head); font-size: 34px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+    .auth-sub { color: var(--text2); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
 
-    .section-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
-    .points-badge{font-family:var(--font-mono);font-size:10px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:2px 8px;color:var(--accent2);white-space:nowrap}
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+    .auth-tabs {
+      display: flex;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 22px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .auth-tab.active { background: var(--card); color: var(--text); }
 
-    .prediction-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-    @media(max-width:600px){.prediction-grid{grid-template-columns:1fr}}
-    .pred-group{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;transition:border-color .2s}
-    .pred-group:hover{border-color:#3a3a44}
-    .pred-group.full{grid-column:1/-1}
-    .pred-group.highlight{border-color:rgba(212,240,0,.25);background:rgba(212,240,0,.025)}
-    .pred-group-label{font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-    .pred-group-title{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.3}
-    .pred-group-pts{font-family:var(--font-mono);font-size:10px;color:var(--accent2)}
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; text-align: left; }
+    .field label { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.5px; }
+    .field input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); }
 
-    .rider-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:10px 34px 10px 12px;outline:none;transition:border-color .2s;width:100%;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a68' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-    .rider-select:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
-    .rider-select option{background:var(--card)}
-    .rider-select:disabled{opacity:.5;cursor:not-allowed}
+    .btn {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .btn-primary { background: var(--accent); color: #0a0a0b; }
+    .btn-primary:hover { background: #e8ff00; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,240,0,.25); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+    .btn-danger { background: rgba(255,59,48,.1); color: var(--red); border: 1px solid rgba(255,59,48,.3); }
+    .btn-danger:hover { background: rgba(255,59,48,.2); }
 
-    .top8-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:500px){.top8-grid{grid-template-columns:1fr}}
-    .slot-label{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px}
+    .error-msg {
+      background: rgba(255,59,48,.1);
+      border: 1px solid rgba(255,59,48,.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 14px;
+      display: none;
+    }
+    .success-msg {
+      background: rgba(48,209,88,.1);
+      border: 1px solid rgba(48,209,88,.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--green);
+      margin-bottom: 14px;
+      display: none;
+    }
 
-    .score-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-    .score-item{text-align:center}
-    .score-num{font-family:var(--font-head);font-size:28px;font-weight:900;color:var(--accent);line-height:1}
-    .score-lbl{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
-    .score-divider{width:1px;height:40px;background:var(--border)}
+    /* ──────── PREDICTION SCREEN ──────── */
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    .submit-zone{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-    .submit-zone-info{font-size:13px;color:var(--text2)}
-    .submit-zone-info strong{color:var(--text);display:block;margin-bottom:2px}
-    .submit-btns{display:flex;gap:10px;flex-shrink:0}
-    .submit-btns .btn{width:auto}
+    .points-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 2px 8px;
+      color: var(--accent2);
+      white-space: nowrap;
+    }
 
-    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:100px;padding:12px 20px;font-size:13px;color:var(--text);z-index:999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
-    .toast.show{transform:translateX(-50%) translateY(0)}
-    .toast.success{border-color:rgba(48,209,88,.4);color:var(--green)}
-    .toast.error{border-color:rgba(255,59,48,.4);color:var(--red)}
+    .prediction-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .prediction-grid { grid-template-columns: 1fr; } }
 
-    .nav-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px}
-    .nav-tab{flex:1;padding:9px 12px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:var(--font-head);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-    .nav-tab.active{background:var(--card);color:var(--text)}
+    .pred-group {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: border-color .2s;
+    }
+    .pred-group:hover { border-color: #3a3a44; }
+    .pred-group.full { grid-column: 1 / -1; }
+    .pred-group.highlight { border-color: rgba(212,240,0,.25); background: rgba(212,240,0,.025); }
 
-    .saved-card{background:var(--card);border:1px solid rgba(48,209,88,.25);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
-    .saved-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .saved-card-title{font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green)}
-    .saved-time{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
-    .saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-    .saved-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
-    .saved-item-lbl{font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
-    .saved-item-val{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text)}
-    .saved-item-val.accent{color:var(--accent)}
-    .saved-item-val.red{color:var(--red)}
+    .pred-group-label {
+      font-family: var(--font-head);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pred-group-title {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .pred-group-pts {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent2);
+    }
 
-    .all-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .count-badge{font-family:var(--font-mono);font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:4px 10px;color:var(--text2)}
+    .rider-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 10px 34px 10px 12px;
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a68' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .rider-select:focus { border-color: var(--accent); }
+    .rider-select option { background: var(--card); }
+    .rider-select:disabled { opacity: .5; cursor: not-allowed; }
 
-    .all-pred-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;transition:border-color .2s}
-    .all-pred-card:hover{border-color:#3a3a44}
-    .all-pred-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .all-pred-nickname{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
-    .all-pred-time{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
-    .all-pred-chips{display:flex;flex-wrap:wrap;gap:6px}
+    /* Top8 grid */
+    .top8-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 500px) { .top8-grid { grid-template-columns: 1fr; } }
 
-    .chip{font-family:var(--font-head);font-size:12px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px}
-    .chip.top2{background:rgba(212,240,0,.12);color:var(--accent);border:1px solid rgba(212,240,0,.2)}
-    .chip.top8{background:rgba(10,132,255,.1);color:#60b5ff;border:1px solid rgba(10,132,255,.2)}
-    .chip.loser{background:rgba(255,59,48,.1);color:var(--red);border:1px solid rgba(255,59,48,.2)}
+    .slot-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: .5px;
+    }
 
-    /* Leaderboard — single definition (FIX: removed duplicate) */
-    .lb-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;transition:border-color .2s}
-    .lb-row:hover{border-color:#3a3a44}
-    .lb-row.me{border-color:rgba(212,240,0,.3);background:rgba(212,240,0,.03)}
-    .lb-row.rank-1{border-color:rgba(212,240,0,.5)}
-    .lb-row.rank-2{border-color:rgba(200,200,200,.3)}
-    .lb-row.rank-3{border-color:rgba(180,120,60,.3)}
-    .lb-rank{font-family:var(--font-head);font-size:20px;font-weight:900;text-align:center;line-height:1}
-    .lb-info{min-width:0}
-    .lb-nick{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px}
-    .lb-breakdown{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-    .lb-chip{font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--text2)}
-    .lb-chip.has-pts{color:var(--green);border-color:rgba(48,209,88,.25);background:rgba(48,209,88,.07)}
-    .lb-score{font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--accent);text-align:right;line-height:1;white-space:nowrap}
-    .lb-score-lbl{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right}
+    /* ──────── SCORE PREVIEW ──────── */
+    .score-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .score-item { text-align: center; }
+    .score-num {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .score-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: .5px; }
+    .score-divider { width: 1px; height: 40px; background: var(--border); }
 
-    .round-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
-    .round-pill{font-family:var(--font-mono);font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:all .15s;text-align:center;line-height:1.4;white-space:nowrap}
-    .round-pill span{display:block;font-family:var(--font-head);font-size:11px;font-weight:700;color:var(--text)}
-    .round-pill:hover{border-color:var(--text2);color:var(--text)}
-    .round-pill.active{border-color:var(--accent);background:rgba(212,240,0,.08);color:var(--accent)}
-    .round-pill.active span{color:var(--accent)}
-    .round-pill.done{border-color:rgba(48,209,88,.3)}
-    .round-pill.done span{color:var(--green)}
+    /* ──────── SUBMIT BUTTON ZONE ──────── */
+    .submit-zone {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .submit-zone-info { font-size: 13px; color: var(--text2); }
+    .submit-zone-info strong { color: var(--text); display: block; margin-bottom: 2px; }
+    .submit-btns { display: flex; gap: 10px; flex-shrink: 0; }
+    .submit-btns .btn { width: auto; }
 
-    .active-round-header{margin-bottom:20px}
-    .active-round-name{font-family:var(--font-head);font-size:22px;font-weight:900;color:var(--text);line-height:1.2}
-    .active-round-city{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:2px}
+    /* ──────── PREDICTIONS LIST (Admin/View) ──────── */
+    .pred-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .pred-table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 0;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+    .pred-table-header span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .pred-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+      align-items: center;
+    }
+    .pred-row:last-child { border-bottom: none; }
+    .pred-row:hover { background: rgba(255,255,255,.02); }
+    .pred-row span { font-size: 13px; color: var(--text2); }
+    .pred-row .nickname { color: var(--text); font-weight: 500; }
+    .pred-row .winner { color: var(--accent); font-family: var(--font-head); font-size: 14px; font-weight: 700; }
 
-    .season-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-    .season-meta{font-family:var(--font-mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:4px 10px}
+    /* ──────── TOAST ──────── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 12px 20px;
+      font-size: 13px;
+      color: var(--text);
+      z-index: 999;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(48,209,88,.4); color: var(--green); }
+    .toast.error { border-color: rgba(255,59,48,.4); color: var(--red); }
 
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;flex-shrink:0}
+    /* ──────── LOCKED OVERLAY ──────── */
+    .locked-overlay {
+      pointer-events: none;
+      opacity: .45;
+      position: relative;
+    }
+    .locked-overlay::after {
+      content: '🔒 ГОНКА РОЗПОЧАЛАСЬ — ЗМІНИ ЗАБОРОНЕНО';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--red);
+      background: rgba(10,10,11,.7);
+      border-radius: var(--radius);
+      pointer-events: none;
+      z-index: 10;
+    }
 
-    @media(max-width:500px){.submit-zone{flex-direction:column;align-items:flex-start}.submit-btns{width:100%}.submit-btns .btn{flex:1}}
+    /* ──────── NAV TABS ──────── */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+    .nav-tab {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .nav-tab.active { background: var(--card); color: var(--text); }
 
-    footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-    footer p{font-size:12px;color:var(--muted)}
-    footer a{color:var(--text2);text-decoration:none}
-    footer a:hover{color:var(--text)}
+    /* ──────── EXISTING PREDICTION CARD ──────── */
+    .saved-card {
+      background: var(--card);
+      border: 1px solid rgba(48,209,88,.25);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .saved-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .saved-card-title {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .saved-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .saved-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    .saved-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .saved-item-lbl { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 3px; }
+    .saved-item-val { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); }
+    .saved-item-val.accent { color: var(--accent); }
+    .saved-item-val.red { color: var(--red); }
+
+    /* ──────── ALL PREDICTIONS VIEW ──────── */
+    .all-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .count-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 10px;
+      color: var(--text2);
+    }
+
+    .all-pred-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color .2s;
+    }
+    .all-pred-card:hover { border-color: #3a3a44; }
+    .all-pred-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .all-pred-nickname {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .all-pred-time {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .all-pred-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      font-family: var(--font-head);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: .5px;
+    }
+    .chip.top2 { background: rgba(212,240,0,.12); color: var(--accent); border: 1px solid rgba(212,240,0,.2); }
+    .chip.top8 { background: rgba(10,132,255,.1); color: #60b5ff; border: 1px solid rgba(10,132,255,.2); }
+    .chip.loser { background: rgba(255,59,48,.1); color: var(--red); border: 1px solid rgba(255,59,48,.2); }
+
+    /* ──────── RESPONSIVE ──────── */
+    @media (max-width: 500px) {
+      .submit-zone { flex-direction: column; align-items: flex-start; }
+      .submit-btns { width: 100%; }
+      .submit-btns .btn { flex: 1; }
+    }
+
+    /* ──────── SPIN ANIMATION ──────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* ──────── LEADERBOARD ──────── */
+    .lb-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      transition: border-color .2s;
+    }
+    .lb-row:hover { border-color: #3a3a44; }
+    .lb-row.me { border-color: rgba(212,240,0,.3); background: rgba(212,240,0,.03); }
+    .lb-row.rank-1 { border-color: rgba(212,240,0,.5); }
+    .lb-row.rank-2 { border-color: rgba(200,200,200,.3); }
+    .lb-row.rank-3 { border-color: rgba(180,120,60,.3); }
+    .lb-rank {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1;
+    }
+    .lb-info { min-width: 0; }
+    .lb-nick {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .lb-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .lb-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .lb-chip.has-pts { color: var(--green); border-color: rgba(48,209,88,.25); background: rgba(48,209,88,.07); }
+    .lb-score {
+      font-family: var(--font-head);
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--accent);
+      text-align: right;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .lb-score-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* ──────── ROUND SELECTOR ──────── */
+    .round-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .round-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .round-pill span { display: block; font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--text); }
+    .round-pill:hover { border-color: var(--text2); color: var(--text); }
+    .round-pill.active { border-color: var(--accent); background: rgba(212,240,0,.08); color: var(--accent); }
+    .round-pill.active span { color: var(--accent); }
+    .round-pill.done { border-color: rgba(48,209,88,.3); }
+    .round-pill.done span { color: var(--green); }
+
+    .active-round-header {
+      margin-bottom: 20px;
+    }
+    .active-round-name {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .active-round-city {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ──────── SEASON STANDINGS ──────── */
+    .season-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .season-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 10px;
+    }
+
+    /* ──────── LEADERBOARD ──────── */
+    .lb-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      transition: border-color .2s;
+    }
+    .lb-row:hover { border-color: #3a3a44; }
+    .lb-row.me { border-color: rgba(212,240,0,.3); background: rgba(212,240,0,.03); }
+    .lb-row.rank-1 { border-color: rgba(212,240,0,.5); }
+    .lb-row.rank-2 { border-color: rgba(200,200,200,.3); }
+    .lb-row.rank-3 { border-color: rgba(180,120,60,.3); }
+    .lb-rank { font-family: var(--font-head); font-size: 20px; font-weight: 900; text-align: center; line-height: 1; }
+    .lb-info { min-width: 0; }
+    .lb-nick { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .lb-breakdown { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+    .lb-chip { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
+    .lb-chip.has-pts { color: var(--green); border-color: rgba(48,209,88,.25); background: rgba(48,209,88,.07); }
+    .lb-score { font-family: var(--font-head); font-size: 32px; font-weight: 900; color: var(--accent); text-align: right; line-height: 1; white-space: nowrap; }
+    .lb-score-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: right; }
+
+    /* ──────── FOOTER ──────── */
+    footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    footer p { font-size: 12px; color: var(--muted); }
+    footer a { color: var(--text2); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
   </style>
+  <!-- Firebase SDK v9 compat (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-
-<!-- Loading overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-logo">SGP</div>
-  <div class="loading-sub">Підключення...</div>
-</div>
-
 <div class="wrap">
+
+  <!-- HEADER -->
   <header>
     <div class="logo">
       <span class="logo-sgp" id="logoText">SGP</span>
@@ -225,57 +839,85 @@
     </div>
     <div id="userPill" style="display:none" class="user-pill">
       <div class="dot"></div>
-      <span id="userNickname">—</span>
-      <button onclick="logout()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 4px" title="Вийти">✕</button>
+      <span id="userEmail">—</span>
+      <button onclick="logout()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 4px;" title="Вийти">✕</button>
     </div>
   </header>
 
+  <!-- RACE STATUS BANNER -->
   <div class="race-banner checking" id="raceBanner">
     <span class="race-banner-icon"><span class="spinner"></span></span>
     <div class="race-banner-text">
       <strong>Перевірка статусу гонки...</strong>
-      <span>Запит до <a href="https://fimspeedway.com/sgp/calendar" target="_blank" rel="noopener">fimspeedway.com</a></span>
+      <span>Запит до <a href="https://fimspeedway.com/sgp/calendar" target="_blank">fimspeedway.com</a></span>
     </div>
   </div>
 
-  <!-- AUTH SCREEN -->
+  <!-- ═══════════ SCREEN: AUTH ═══════════ -->
   <div class="screen active" id="screenAuth">
     <div class="auth-wrap">
       <div class="auth-icon">🏁</div>
       <div class="auth-title">Зроби прогноз</div>
       <div class="auth-sub">Увійди або зареєструйся, щоб внести свій прогноз на гонку SGP. Зміни після старту гонки неможливі.</div>
+
       <div class="auth-card">
         <div class="auth-tabs">
           <button class="auth-tab active" onclick="switchTab('login')">Увійти</button>
           <button class="auth-tab" onclick="switchTab('register')">Реєстрація</button>
         </div>
+
         <div id="tabLogin">
           <div class="error-msg" id="loginError"></div>
           <div class="success-msg" id="loginSuccess"></div>
-          <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="твій@email.com" aria-label="Email для входу" autocomplete="email"/></div>
-          <div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" aria-label="Пароль для входу" autocomplete="current-password"/></div>
-          <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">УВІЙТИ</button>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="твій@email.com" />
+          </div>
+          <div class="field">
+            <label>Пароль</label>
+            <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+          </div>
+          <button class="btn btn-primary" onclick="doLogin()">УВІЙТИ</button>
         </div>
+
         <div id="tabRegister" style="display:none">
           <div class="error-msg" id="regError"></div>
           <div class="success-msg" id="regSuccess"></div>
-          <div class="field"><label>Нікнейм</label><input type="text" id="regNick" placeholder="SuperRider" aria-label="Нікнейм" autocomplete="username" maxlength="30"/></div>
-          <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="твій@email.com" aria-label="Email для реєстрації" autocomplete="email"/></div>
-          <div class="field"><label>Пароль</label><input type="password" id="regPass" placeholder="мін. 6 символів" aria-label="Пароль" autocomplete="new-password"/></div>
-          <div class="field"><label>Повторіть пароль</label><input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()" aria-label="Повторіть пароль" autocomplete="new-password"/></div>
-          <button class="btn btn-primary" id="regBtn" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
+          <div class="field">
+            <label>Нікнейм</label>
+            <input type="text" id="regNick" placeholder="SuperRider" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="regEmail" placeholder="твій@email.com" />
+          </div>
+          <div class="field">
+            <label>Пароль</label>
+            <input type="password" id="regPass" placeholder="мін. 6 символів" />
+          </div>
+          <div class="field">
+            <label>Повторіть пароль</label>
+            <input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()" />
+          </div>
+          <button class="btn btn-primary" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MAIN SCREEN -->
+  <!-- ═══════════ SCREEN: MAIN ═══════════ -->
   <div class="screen" id="screenMain">
+
+    <!-- NAV -->
+    <!-- Round selector -->
     <div class="round-selector" id="roundSelectorWrap"></div>
+
+    <!-- Active round header -->
     <div class="active-round-header">
       <div class="active-round-name" id="activeRoundName">—</div>
       <div class="active-round-city" id="activeRoundCity"></div>
     </div>
+
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="showTab('tabMyPred')">Мій прогноз</button>
       <button class="nav-tab" onclick="showTab('tabAllPreds')">Всі прогнози</button>
@@ -283,8 +925,10 @@
       <button class="nav-tab" onclick="showTab('tabSeason')">📊 Сезон</button>
     </div>
 
-    <!-- MY PREDICTION -->
+    <!-- ─── TAB: МІЙ ПРОГНОЗ ─── -->
     <div id="tabMyPred">
+
+      <!-- My score card (shown when race is locked and results available) -->
       <div id="myScoreCard" style="display:none;background:var(--card);border:1px solid rgba(212,240,0,.3);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">🎯 Твій результат</div>
         <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
@@ -295,6 +939,8 @@
           <div style="display:flex;flex-wrap:wrap;gap:6px" id="myScoreBreakdown"></div>
         </div>
       </div>
+
+      <!-- Saved prediction view -->
       <div id="savedPredBlock" style="display:none">
         <div class="saved-card">
           <div class="saved-card-header">
@@ -304,24 +950,47 @@
           <div class="saved-grid" id="savedGrid"></div>
         </div>
       </div>
+
+      <!-- Form section -->
       <div id="predFormWrap">
-        <div class="section-title"><span>Категорія 1 — Топ 2 фіналісти</span><span class="points-badge">макс. +8 пкт</span></div>
+
+        <div class="section-title">
+          <span>Категорія 1 — Топ 2 фіналісти</span>
+          <span class="points-badge">макс. +8 пкт</span>
+        </div>
         <div class="prediction-grid">
           <div class="pred-group highlight">
-            <div class="pred-group-label"><span>Фіналіст #1</span><span class="pred-group-pts">+1 Топ8 · +3 бонус</span></div>
+            <div class="pred-group-label">
+              <span>Фіналіст #1</span>
+              <span class="pred-group-pts">+1 пкт Топ8 · +3 пкт бонус</span>
+            </div>
             <div class="pred-group-title">Гонщик Топ 2</div>
-            <select class="rider-select" id="top2_1"><option value="">Оберіть</option></select>
+            <select class="rider-select" id="top2_1">
+              <option value="">Оберіть гонщика</option>
+            </select>
           </div>
           <div class="pred-group highlight">
-            <div class="pred-group-label"><span>Фіналіст #2</span><span class="pred-group-pts">+1 Топ8 · +3 бонус</span></div>
+            <div class="pred-group-label">
+              <span>Фіналіст #2</span>
+              <span class="pred-group-pts">+1 пкт Топ8 · +3 пкт бонус</span>
+            </div>
             <div class="pred-group-title">Гонщик Топ 2</div>
-            <select class="rider-select" id="top2_2"><option value="">Оберіть</option></select>
+            <select class="rider-select" id="top2_2">
+              <option value="">Оберіть гонщика</option>
+            </select>
           </div>
         </div>
-        <div class="section-title"><span>Категорія 2 — Топ 8 (місця 3–8)</span><span class="points-badge">макс. +6 пкт</span></div>
+
+        <div class="section-title">
+          <span>Категорія 2 — Топ 8 (місця 3–8)</span>
+          <span class="points-badge">макс. +6 пкт</span>
+        </div>
         <div class="pred-group full" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>Шість гонщиків</span><span class="pred-group-pts">+1 за кожного у Топ 8</span></div>
-          <div class="pred-group-title">Місця 3–8</div>
+          <div class="pred-group-label">
+            <span>Шість додаткових гонщиків</span>
+            <span class="pred-group-pts">+1 пкт за кожного вгаданого у Топ 8</span>
+          </div>
+          <div class="pred-group-title">Місця 2–8 (оберіть 6)</div>
           <div class="top8-grid" style="margin-top:10px">
             <div><div class="slot-label">Слот 3</div><select class="rider-select" id="top8_1"><option value="">Гонщик</option></select></div>
             <div><div class="slot-label">Слот 4</div><select class="rider-select" id="top8_2"><option value="">Гонщик</option></select></div>
@@ -331,28 +1000,55 @@
             <div><div class="slot-label">Слот 8</div><select class="rider-select" id="top8_6"><option value="">Гонщик</option></select></div>
           </div>
         </div>
-        <div class="section-title"><span>Категорія 3 — Невдача дня</span><span class="points-badge">макс. +2 пкт</span></div>
-        <div class="pred-group" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>16-те місце</span><span class="pred-group-pts">+1 гонщик · +1 бонус за інцидент</span></div>
-          <div class="pred-group-title">Невдаха дня</div>
-          <select class="rider-select" id="loser" style="margin-top:10px"><option value="">Оберіть</option></select>
+
+        <div class="section-title">
+          <span>Категорія 3 — «Невдача дня»</span>
+          <span class="points-badge">макс. +2 пкт</span>
         </div>
-        <div class="section-title"><span>Категорія 4 — Подіум</span><span class="points-badge">бонусна</span></div>
+        <div class="pred-group" style="margin-bottom:24px">
+          <div class="pred-group-label">
+            <span>16-те місце</span>
+            <span class="pred-group-pts">+1 пкт за гонщика · +1 пкт бонус за схід/ДК/фальстарт</span>
+          </div>
+          <div class="pred-group-title">Невдаха дня (останній без запасних)</div>
+          <select class="rider-select" id="loser" style="margin-top:10px">
+            <option value="">Оберіть гонщика</option>
+          </select>
+        </div>
+
+        <div class="section-title">
+          <span>Категорія 4 — Подіум Топ 3</span>
+          <span class="points-badge">бонусна · без очок у формулі</span>
+        </div>
         <div class="pred-group full" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>Три місця фіналу</span></div>
-          <div class="pred-group-title">Подіум фіналу</div>
+          <div class="pred-group-label">
+            <span>Три призові місця</span>
+            <span class="pred-group-pts">місця 1, 2, 3 фіналу</span>
+          </div>
+          <div class="pred-group-title">Подіум фіналу (оберіть 3 різних)</div>
           <div class="top8-grid" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr">
-            <div><div class="slot-label">🥇 1-е</div><select class="rider-select" id="podium1"><option value="">Гонщик</option></select></div>
-            <div><div class="slot-label">🥈 2-е</div><select class="rider-select" id="podium2"><option value="">Гонщик</option></select></div>
-            <div><div class="slot-label">🥉 3-є</div><select class="rider-select" id="podium3"><option value="">Гонщик</option></select></div>
+            <div><div class="slot-label">🥇 1-е місце</div><select class="rider-select" id="podium1"><option value="">Гонщик</option></select></div>
+            <div><div class="slot-label">🥈 2-е місце</div><select class="rider-select" id="podium2"><option value="">Гонщик</option></select></div>
+            <div><div class="slot-label">🥉 3-є місце</div><select class="rider-select" id="podium3"><option value="">Гонщик</option></select></div>
           </div>
         </div>
-        <div class="section-title"><span>Категорія 5 — Переможець</span><span class="points-badge">бонусна</span></div>
-        <div class="pred-group" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>Переможець фіналу</span></div>
-          <div class="pred-group-title">Чемпіон гонки</div>
-          <select class="rider-select" id="winner" style="margin-top:10px"><option value="">Оберіть</option></select>
+
+        <div class="section-title">
+          <span>Категорія 5 — Переможець фіналу</span>
+          <span class="points-badge">бонусна · без очок у формулі</span>
         </div>
+        <div class="pred-group" style="margin-bottom:24px">
+          <div class="pred-group-label">
+            <span>Чемпіон гонки</span>
+            <span class="pred-group-pts">переможець фінального заїзду</span>
+          </div>
+          <div class="pred-group-title">Переможець фіналу</div>
+          <select class="rider-select" id="winner" style="margin-top:10px">
+            <option value="">Оберіть гонщика</option>
+          </select>
+        </div>
+
+        <!-- Score preview -->
         <div class="score-preview">
           <div class="score-item"><div class="score-num" id="previewTop2">0</div><div class="score-lbl">Топ 2</div></div>
           <div class="score-divider"></div>
@@ -370,20 +1066,23 @@
             <div style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text)" id="previewFilled">0 / 13</div>
           </div>
         </div>
-        <div class="submit-zone">
+
+        <!-- Submit zone -->
+        <div class="submit-zone" id="submitZone">
           <div class="submit-zone-info">
             <strong id="submitZoneTitle">Готові до збереження?</strong>
-            <span id="submitZoneDesc">Заповніть всі поля. Після старту гонки зміни неможливі.</span>
+            <span id="submitZoneDesc">Заповніть всі поля та натисніть «Зберегти». Після старту гонки зміни неможливі.</span>
           </div>
           <div class="submit-btns">
             <button class="btn btn-ghost" id="btnClear" onclick="clearForm()" style="width:auto">Очистити</button>
             <button class="btn btn-primary" id="btnSave" onclick="savePrediction()">💾 ЗБЕРЕГТИ</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- ALL PREDICTIONS -->
+      </div><!-- end predFormWrap -->
+    </div><!-- end tabMyPred -->
+
+    <!-- ─── TAB: ВСІ ПРОГНОЗИ ─── -->
     <div id="tabAllPreds" style="display:none">
       <div class="all-header">
         <div class="section-title" style="margin-bottom:0">Прогнози учасників</div>
@@ -392,13 +1091,15 @@
       <div id="allPredsList"></div>
     </div>
 
-    <!-- RESULTS -->
+    <!-- ─── TAB: РЕЗУЛЬТАТИ РАУНДУ ─── -->
     <div id="tabResults" style="display:none">
+
       <div style="background:var(--card);border:1px solid rgba(212,240,0,.2);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px">🏁 Офіційні результати</div>
         <div id="noResultsMsg" style="font-family:var(--font-mono);font-size:12px;color:var(--muted);display:none">Результати ще не опубліковано</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px" id="officialResultsGrid"></div>
       </div>
+
       <div class="all-header">
         <div class="section-title" style="margin-bottom:0">Таблиця раунду</div>
         <span class="count-badge" id="lbCount">0 учасників</span>
@@ -406,29 +1107,51 @@
       <div id="leaderboardList"></div>
     </div>
 
-    <!-- SEASON -->
+    <!-- ─── TAB: СЕЗОН ─── -->
     <div id="tabSeason" style="display:none">
+
       <div class="season-header-row">
         <div class="section-title" style="margin-bottom:0">Сезон 2026 — загальний залік</div>
         <span class="season-meta" id="seasonRoundsCount">0 / 0 раундів</span>
       </div>
+
+      <!-- Season podium (top 3) -->
+      <div id="seasonPodium" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap"></div>
+
+      <!-- Full standings -->
       <div id="seasonStandingsList"></div>
     </div>
 
-    <!-- SWC -->
+    <!-- ─── SWC SCREENS (shown when SWC mode active) ─── -->
     <div id="swcScreen" style="display:none">
+
+      <!-- SWC Round selector -->
       <div class="round-selector" id="swcRoundSelectorWrap"></div>
       <div class="active-round-header">
         <div class="active-round-name" id="swcRoundName">—</div>
         <div class="active-round-city" id="swcRoundCity"></div>
       </div>
+
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="showSwcTab('swcTabPred')">Мій прогноз</button>
         <button class="nav-tab" onclick="showSwcTab('swcTabAll')">Всі прогнози</button>
-        <button class="nav-tab" onclick="showSwcTab('swcTabResults')">🏆 Раунд</button>
+        <button class="nav-tab" id="swcTabResultsBtn" onclick="showSwcTab('swcTabResults')">🏆 Раунд</button>
         <button class="nav-tab" onclick="showSwcTab('swcTabSeason')">📊 Сезон SWC</button>
       </div>
+
+      <!-- ── SWC: МІЙ ПРОГНОЗ ── -->
       <div id="swcTabPred">
+        <div id="swcMyScoreCard" style="display:none;background:var(--card);border:1px solid rgba(10,132,255,.3);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px">
+          <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#60b5ff;margin-bottom:12px">🎯 Твій результат</div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-family:var(--font-head);font-size:52px;font-weight:900;color:#60b5ff;line-height:1" id="swcMyScoreNum">—</div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">балів</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px" id="swcMyScoreBreakdown"></div>
+          </div>
+        </div>
+
         <div id="swcSavedPredBlock" style="display:none">
           <div class="saved-card" style="border-color:rgba(10,132,255,.25)">
             <div class="saved-card-header">
@@ -438,17 +1161,21 @@
             <div class="saved-grid" id="swcSavedGrid"></div>
           </div>
         </div>
+
         <div id="swcFormWrap">
+          <!-- Teams will be rendered dynamically per round -->
           <div id="swcTeamSections"></div>
+
           <div class="score-preview" style="margin-bottom:20px">
             <div class="score-item"><div class="score-num" id="swcPreviewFilled" style="font-size:22px">0</div><div class="score-lbl">заповнено</div></div>
             <div class="score-divider"></div>
             <div class="score-item"><div class="score-num" id="swcPreviewTotal" style="font-size:22px;color:var(--accent2)">—</div><div class="score-lbl">потрібно</div></div>
           </div>
-          <div class="submit-zone">
+
+          <div class="submit-zone" id="swcSubmitZone">
             <div class="submit-zone-info">
               <strong id="swcSubmitTitle">Готові до збереження?</strong>
-              <span id="swcSubmitDesc">Розставте команди за місцями.</span>
+              <span id="swcSubmitDesc">Правила нарахування балів будуть оголошені окремо.</span>
             </div>
             <div class="submit-btns">
               <button class="btn btn-ghost" onclick="swcClearForm()" style="width:auto">Очистити</button>
@@ -457,43 +1184,59 @@
           </div>
         </div>
       </div>
+
+      <!-- ── SWC: ВСІ ПРОГНОЗИ ── -->
       <div id="swcTabAll" style="display:none">
-        <div class="all-header"><div class="section-title" style="margin-bottom:0">Прогнози</div><span class="count-badge" id="swcAllCount">0</span></div>
+        <div class="all-header">
+          <div class="section-title" style="margin-bottom:0">Прогнози учасників</div>
+          <span class="count-badge" id="swcAllCount">0 прогнозів</span>
+        </div>
         <div id="swcAllPredsList"></div>
       </div>
+
+      <!-- ── SWC: РЕЗУЛЬТАТИ РАУНДУ ── -->
       <div id="swcTabResults" style="display:none">
         <div style="background:var(--card);border:1px solid rgba(10,132,255,.2);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px">
-          <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#60b5ff;margin-bottom:14px">🏁 Результати SWC</div>
+          <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#60b5ff;margin-bottom:14px">🏁 Офіційні результати</div>
           <div id="swcNoResults" style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">Результати ще не опубліковано</div>
           <div id="swcResultsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
         </div>
-        <div class="all-header"><div class="section-title" style="margin-bottom:0">Таблиця</div><span class="count-badge" id="swcLbCount">0</span></div>
+        <div class="all-header">
+          <div class="section-title" style="margin-bottom:0">Таблиця раунду</div>
+          <span class="count-badge" id="swcLbCount">0 учасників</span>
+        </div>
         <div id="swcLeaderboardList"></div>
       </div>
+
+      <!-- ── SWC: СЕЗОН ── -->
       <div id="swcTabSeason" style="display:none">
         <div class="season-header-row">
-          <div class="section-title" style="margin-bottom:0">SWC 2026 — залік</div>
+          <div class="section-title" style="margin-bottom:0">SWC 2026 — загальний залік</div>
           <span class="season-meta" id="swcSeasonCount">0 / 3 раундів</span>
         </div>
         <div id="swcSeasonList"></div>
       </div>
-    </div>
-  </div>
 
+    </div><!-- end swcScreen -->
+
+  </div><!-- end screenMain -->
+
+  <!-- FOOTER -->
   <footer>
-    <p>Дані: <a href="https://fimspeedway.com" target="_blank" rel="noopener">fimspeedway.com</a> · SGP 2026 + SWC 2026 · <span style="color:var(--green)">Firebase</span></p>
+    <p>Дані: <a href="https://fimspeedway.com" target="_blank">fimspeedway.com</a> · SGP 2026 + SWC 2026</p>
     <p id="footerStatus" style="color:var(--muted)"></p>
   </footer>
+
 </div>
 
-<div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════════════════════════════
-// SEC-001: API Key публічний — обов'язково обмежте через Google Cloud Console:
-// APIs & Services → Credentials → HTTP referrers: victorpolishchouk.github.io/*
+// ═══════════════════════════════════════════
+//  FIREBASE CONFIG
+// ═══════════════════════════════════════════
 const firebaseConfig = {
   apiKey:            "AIzaSyDz3LTjBimSnFOjsKWWFV7oJI3q8C2IEFM",
   authDomain:        "sgp-oracle.firebaseapp.com",
@@ -508,113 +1251,217 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// ═══════════════════════════════════════════════════════════════
-//  SEASON CONFIG — 2026 (FIX: r01 дати виправлено)
-// ═══════════════════════════════════════════════════════════════
+// ─── DB helpers ─────────────────────────────
+// users/{uid}          → { nickname, email, createdAt }
+// sgp_preds/{roundId}/entries/{uid} → prediction doc
+// swc_preds/{roundId}/entries/{uid} → prediction doc
+
+async function dbGetUser(uid) {
+  const snap = await db.collection('users').doc(uid).get();
+  return snap.exists ? snap.data() : null;
+}
+async function dbSaveUser(uid, data) {
+  await db.collection('users').doc(uid).set(data, { merge: true });
+}
+async function dbGetPred(collection, roundId, uid) {
+  const snap = await db.collection(collection).doc(roundId)
+    .collection('entries').doc(uid).get();
+  return snap.exists ? snap.data() : null;
+}
+async function dbSavePred(collection, roundId, uid, data) {
+  await db.collection(collection).doc(roundId)
+    .collection('entries').doc(uid).set(data);
+}
+async function dbGetAllPreds(collection, roundId) {
+  const snap = await db.collection(collection).doc(roundId)
+    .collection('entries').get();
+  return snap.docs.map(d => d.data());
+}
+// Season: all rounds' entries in one query per round
+async function dbGetSeasonPreds(collection, roundIds) {
+  const result = {};
+  await Promise.all(roundIds.map(async rid => {
+    result[rid] = await dbGetAllPreds(collection, rid);
+  }));
+  return result;
+}
+
+// ═══════════════════════════════════════════
+//  SEASON CONFIG  —  SGP 2026
+// ═══════════════════════════════════════════
 const SEASON = {
   year: 2026,
   rounds: [
-    { id:'r01', name:'Vojens GP',            city:'Vojens, Denmark',        date:'2026-03-25', startDatetime:'2026-03-25T12:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'],
-      results:{ top2:['ZMARZLIK','BEWLEY'], top8:['ZMARZLIK','BEWLEY','MICHELSEN','LAMBERT','HOLDER','LINDGREN','KUBERA','FRICKE'], podium:['ZMARZLIK','BEWLEY','MICHELSEN'], winner:'ZMARZLIK', loser:'KURTZ', loserIncident:true } },
-    { id:'r02', name:'Landshut GP',          city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r03', name:'Prague GP',            city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r04', name:'Manchester GP (R3)',   city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r05', name:'Manchester GP (R4)',   city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r06', name:'Wroclaw GP',           city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r07', name:'Malilla GP',           city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r08', name:'Lodz GP',              city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r09', name:'Riga GP',              city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r10', name:'Vojens GP (R10)',      city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-    { id:'r11', name:'Torun GP',             city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00',
-      riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
-  ]
+    {
+      id: 'r01',
+      name: 'Vojens GP 2025',
+      city: 'Vojens, Denmark',
+      date: '2025-09-13',
+      startDatetime: '2026-03-25T12:00:00',
+      riders: ['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'],
+      results: {
+        top2:  ['ZMARZLIK','BEWLEY'],
+        top8:  ['ZMARZLIK','BEWLEY','MICHELSEN','LAMBERT','HOLDER','LINDGREN','KUBERA','FRICKE'],
+        podium: ['ZMARZLIK','BEWLEY','MICHELSEN'],
+        winner: 'ZMARZLIK',
+        loser:  'KURTZ',
+        loserIncident: true,
+      },
+    },
+    { id:'r02', name:'Landshut GP',       city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r03', name:'Prague GP',          city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r04', name:'Manchester GP (R3)', city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r05', name:'Manchester GP (R4)', city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r06', name:'Wroclaw GP',         city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r07', name:'Malilla GP',         city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r08', name:'Lodz GP',            city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r09', name:'Riga GP',            city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r10', name:'Vojens GP',          city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+    { id:'r11', name:'Torun GP',           city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00', riders:['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'], results:null },
+  ],
 };
+let ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length - 1];
 
-let ACTIVE_ROUND = SEASON.rounds.find(r=>!r.results) || SEASON.rounds[SEASON.rounds.length-1];
+// ═══════════════════════════════════════════
+//  SWC CONFIG  —  2026
+// ═══════════════════════════════════════════
+const COUNTRY_FLAGS = {
+  'Poland':'🇵🇱','Australia':'🇦🇺','Great Britain':'🇬🇧','Germany':'🇩🇪',
+  'Czech Republic':'🇨🇿','Ukraine':'🇺🇦','Latvia':'🇱🇻','Denmark':'🇩🇰',
+  'Norway':'🇳🇴','Sweden':'🇸🇪',
+};
+const SWC_TEAMS = {
+  'Poland':        { riders:['ZMARZLIK','KUBERA','DUDEK','JANOWSKI','KOLODZIEJ'] },
+  'Australia':     { riders:['HOLDER','FRICKE','DOYLE','LAMBERT'] },
+  'Great Britain': { riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK'] },
+  'Germany':       { riders:['HUCKENBECK','KVECH','ERNST','REISSIG'] },
+  'Czech Republic':{ riders:['VACULIK','MILIK','CHLUPAC','HAJEK'] },
+  'Ukraine':       { riders:['LEBEDEVS','OSTERGAARD','PARNICKI','TROFIMOV'] },
+  'Latvia':        { riders:['LEBEDEVS','PAVLOVS','LAHNO','HNIDENKO'] },
+  'Denmark':       { riders:['MICHELSEN','LINDGREN','JEPSEN','PEDERSEN'] },
+  'Norway':        { riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN'] },
+  'Sweden':        { riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON'] },
+};
+const SWC_SEASON = {
+  year: 2026,
+  rounds: [
+    { id:'swc_sf1', name:'Semi-Final 1', city:'Landshut, Germany',  date:'2026-05-01', startDatetime:'2026-05-01T18:00:00', format:'semi-final', teams:['Germany','Czech Republic','Great Britain','Ukraine'], qualifiers:1, results:null },
+    { id:'swc_sf2', name:'Semi-Final 2', city:'Riga, Latvia',       date:'2026-08-07', startDatetime:'2026-08-07T18:00:00', format:'semi-final', teams:['Latvia','Denmark','Norway','Sweden'],                  qualifiers:1, results:null },
+    {
+      id:'swc_final', name:'Final', city:'Warsaw, Poland', date:'2026-08-29', startDatetime:'2026-08-29T18:00:00', format:'final',
+      teamsBase:['Poland','Australia'], sfWinners:['swc_sf1','swc_sf2'], qualifiers:0, results:null,
+      get teams() {
+        const r1 = SWC_SEASON.rounds.find(r=>r.id==='swc_sf1');
+        const r2 = SWC_SEASON.rounds.find(r=>r.id==='swc_sf2');
+        return ['Poland','Australia', r1?.results?.qualified||'Winner SF1', r2?.results?.qualified||'Winner SF2'];
+      },
+    },
+  ],
+};
+let SWC_ACTIVE_ROUND = SWC_SEASON.rounds[0];
 
-// ─── Scoring ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════
+//  SCORING
+// ═══════════════════════════════════════════
 function calcScore(pred, results) {
-  if (!pred||!results) return {score:0,breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0}};
-  let score=0; const breakdown={};
-  let t2=0;
-  [pred.top2_1,pred.top2_2].forEach(r=>{ if(!r)return; if(results.top8.includes(r))t2+=1; if(results.top2.includes(r))t2+=3; });
-  breakdown.top2=t2; score+=t2;
-  let t8=0;
-  [pred.top8_1,pred.top8_2,pred.top8_3,pred.top8_4,pred.top8_5,pred.top8_6].forEach(r=>{ if(r&&results.top8.includes(r))t8++; });
-  breakdown.top8=t8; score+=t8;
-  let lp=0;
-  if(pred.loser&&pred.loser===results.loser){ lp++; if(results.loserIncident)lp++; }
-  breakdown.loser=lp; score+=lp;
-  let pp=0;
-  [[pred.podium1,0],[pred.podium2,1],[pred.podium3,2]].forEach(([r,i])=>{ if(r&&results.podium[i]===r)pp++; });
-  breakdown.podium=pp; score+=pp;
-  let wp=pred.winner&&pred.winner===results.winner?2:0;
-  breakdown.winner=wp; score+=wp;
-  return {score,breakdown};
+  if (!pred || !results) return { score:0, breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0} };
+  let score = 0; const breakdown = {};
+  let top2pts = 0;
+  [pred.top2_1, pred.top2_2].forEach(r => {
+    if (!r) return;
+    if (results.top8.includes(r)) top2pts += 1;
+    if (results.top2.includes(r)) top2pts += 3;
+  });
+  breakdown.top2 = top2pts; score += top2pts;
+  let top8pts = 0;
+  [pred.top8_1,pred.top8_2,pred.top8_3,pred.top8_4,pred.top8_5,pred.top8_6].forEach(r => {
+    if (r && results.top8.includes(r)) top8pts += 1;
+  });
+  breakdown.top8 = top8pts; score += top8pts;
+  let loserPts = 0;
+  if (pred.loser && pred.loser === results.loser) { loserPts = 1; if (results.loserIncident) loserPts = 2; }
+  breakdown.loser = loserPts; score += loserPts;
+  let podiumPts = 0;
+  [[pred.podium1,0],[pred.podium2,1],[pred.podium3,2]].forEach(([r,i]) => { if (r && results.podium[i]===r) podiumPts++; });
+  breakdown.podium = podiumPts; score += podiumPts;
+  let winnerPts = 0;
+  if (pred.winner && pred.winner === results.winner) winnerPts = 2;
+  breakdown.winner = winnerPts; score += winnerPts;
+  return { score, breakdown };
+}
+function swcCalcScore(picks, results) {
+  if (!picks || !results) return { score:0, breakdown:{ranking:0,topRiders:0,loser:0}, details:[] };
+  let score = 0;
+  const breakdown = { ranking:0, topRiders:0, loser:0 };
+  const details = [];
+
+  // ── Категорія 1: Топ 4 команди — 1 пункт за точну позицію ──
+  const ranking = results.ranking || [];
+  const rankPicks = Object.entries(picks.teams||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4)));
+  rankPicks.forEach(([rank, team]) => {
+    const pos = parseInt(rank.slice(4)) - 1;
+    const pts = ranking[pos] === team ? 1 : 0;
+    score += pts; breakdown.ranking += pts;
+    const emoji = ['🥇','🥈','🥉','4️⃣'][pos] || `${pos+1}.`;
+    details.push({ cat:'ranking', label:`${emoji} ${COUNTRY_FLAGS[team]||''}${team}`, pts });
+  });
+
+  // ── Категорія 2: Топ гонщик команди — 1 пункт за кожного вгаданого ──
+  const topRiders = results.topRiders || {};  // { 'Poland': 'ZMARZLIK', 'Germany': 'HUCKENBECK', ... }
+  const pickedTopRiders = picks.topRiders || {};
+  Object.entries(pickedTopRiders).forEach(([team, rider]) => {
+    const correct = topRiders[team];
+    const pts = (correct && rider === correct) ? 1 : 0;
+    score += pts; breakdown.topRiders += pts;
+    details.push({ cat:'topRider', label:`🏆 ${COUNTRY_FLAGS[team]||''}${team}: ${rider}`, pts });
+  });
+
+  // ── Категорія 3: Команда-невдаха — 1 пункт за вгадану ──
+  const loserTeam = results.loserTeam || null;
+  const pickedLoser = picks.loserTeam || null;
+  if (pickedLoser !== null && pickedLoser !== undefined) {
+    const pts = pickedLoser === loserTeam ? 1 : 0;
+    score += pts; breakdown.loser += pts;
+    details.push({ cat:'loser', label:`💀 ${COUNTRY_FLAGS[pickedLoser]||''}${pickedLoser}`, pts });
+  }
+
+  return { score, breakdown, details };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════════════════
-let currentUser  = null; // Firebase user
-let userNickname = '';
-let raceLocked   = false;
+// ═══════════════════════════════════════════
+let currentUser    = null; // { uid, email, nickname }
+let raceLocked     = false;
+let swcRaceLocked  = false;
+let currentCompetition = 'SGP';
 
-// Race lock cache with TTL
-const LOCK_TTL = 24*60*60*1000;
-function getRaceLockCache(rid) {
-  try { const o=JSON.parse(localStorage.getItem('sgp_lock_'+rid)||'null'); if(!o)return null; if(Date.now()-o.ts>LOCK_TTL){localStorage.removeItem('sgp_lock_'+rid);return null;} return o.locked; } catch(e){return null;}
-}
-function setRaceLockCache(rid,locked) { localStorage.setItem('sgp_lock_'+rid,JSON.stringify({locked,ts:Date.now()})); }
-
-// ═══════════════════════════════════════════════════════════════
-//  FIREBASE AUTH
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  AUTH  —  Firebase Auth
+// ═══════════════════════════════════════════
 function switchTab(tab) {
-  document.getElementById('tabLogin').style.display    = tab==='login'?'':'none';
-  document.getElementById('tabRegister').style.display = tab==='register'?'':'none';
-  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0)===(tab==='login')));
+  document.getElementById('tabLogin').style.display    = tab==='login'    ? '':'none';
+  document.getElementById('tabRegister').style.display = tab==='register' ? '':'none';
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active',(i===0)===(tab==='login')));
 }
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
-  errEl.style.display='none';
-  if(!email||!pass){
-    showMsg(errEl,'Заповніть email та пароль');
-    showToast('⚠️ Заповніть email та пароль','error');
-    return;
-  }
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true; btn.textContent='…';
+  errEl.style.display = 'none';
+  if (!email||!pass) { showMsg(errEl,'Заповніть email та пароль'); return; }
+  showLoading('loginBtn', 'ВХІД...');
   try {
-    await auth.signInWithEmailAndPassword(email,pass);
-    showToast('✓ Вхід успішний!','success');
+    await auth.signInWithEmailAndPassword(email, pass);
     // onAuthStateChanged handles the rest
   } catch(e) {
-    const msgs={
-      'auth/user-not-found':'Email не знайдено.',
-      'auth/wrong-password':'Невірний пароль.',
-      'auth/invalid-email':'Некоректний email.',
-      'auth/invalid-credential':'Невірний email або пароль.',
-      'auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.',
-      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
-    };
-    const msg = msgs[e.code] || e.message;
+    hideLoading('loginBtn', 'УВІЙТИ');
+    const msg = e.code === 'auth/invalid-credential' ? 'Невірний email або пароль.'
+              : e.code === 'auth/user-not-found'      ? 'Email не знайдено.'
+              : e.code === 'auth/wrong-password'       ? 'Невірний пароль.'
+              : e.message;
     showMsg(errEl, msg);
-    showToast('❌ ' + msg, 'error');
-    btn.disabled=false; btn.textContent='УВІЙТИ';
   }
 }
 
@@ -626,517 +1473,449 @@ async function doRegister() {
   const errEl = document.getElementById('regError');
   const okEl  = document.getElementById('regSuccess');
   errEl.style.display='none'; okEl.style.display='none';
-  if(!nick){
-    showMsg(errEl,'Введіть нікнейм.');
-    showToast('⚠️ Введіть нікнейм','error');
-    return;
-  }
-  // SEC-002: нікнейм — тільки літери, цифри, пробіл, дефіс (2-30 символів). Заборонено HTML/скрипти
-  const nickPattern = /^[a-zA-Z0-9А-ЯҐЄІЇа-яґєіїs\'\-]{2,30}$/;
-  const cleanNick = nick.replace(/\s+/g,' ').trim();
-  if(!nickPattern.test(cleanNick)||/<|>|&|"|\/|script/i.test(cleanNick)){
-    showMsg(errEl,'Нікнейм: 2–30 символів. Тільки літери, цифри, дефіс. Спецсимволи заборонені.');
-    showToast('⚠️ Некоректний нікнейм','error');
-    return;
-  }
-  if(!email||!email.includes('@')){
-    showMsg(errEl,'Некоректний email.');
-    showToast('⚠️ Некоректний email','error');
-    return;
-  }
-  if(pass.length<6){
-    showMsg(errEl,'Пароль мін. 6 символів.');
-    showToast('⚠️ Пароль мін. 6 символів','error');
-    return;
-  }
-  if(pass!==pass2){
-    showMsg(errEl,'Паролі не співпадають.');
-    showToast('⚠️ Паролі не співпадають','error');
-    return;
-  }
-  const btn=document.getElementById('regBtn');
-  btn.disabled=true; btn.textContent='…';
+  if (!nick)                         { showMsg(errEl,'Введіть нікнейм.'); return; }
+  if (!email||!email.includes('@'))  { showMsg(errEl,'Некоректний email.'); return; }
+  if (pass.length < 6)               { showMsg(errEl,'Пароль мін. 6 символів.'); return; }
+  if (pass !== pass2)                { showMsg(errEl,'Паролі не співпадають.'); return; }
+  showLoading('registerBtn', 'РЕЄСТРАЦІЯ...');
   try {
-    // Спочатку створюємо акаунт — після цього юзер авторизований
-    // і Firestore Rules дозволять запис профілю
-    const cred = await auth.createUserWithEmailAndPassword(email,pass);
-    await db.collection('users').doc(cred.user.uid).set({
-      nickname:nick, email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    showMsg(okEl,`Ласкаво просимо, ${nick}!`);
-    showToast(`✓ Ласкаво просимо, ${nick}!`,'success');
-    // onAuthStateChanged fires automatically
+    // Check nickname uniqueness
+    const nickSnap = await db.collection('users').where('nickname','==',nick).limit(1).get();
+    if (!nickSnap.empty) { hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ'); showMsg(errEl,'Нікнейм вже зайнятий.'); return; }
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await dbSaveUser(cred.user.uid, { nickname: nick, email, createdAt: new Date().toISOString() });
+    // onAuthStateChanged handles the rest
   } catch(e) {
-    const msgs={
-      'auth/email-already-in-use':'Email вже зареєстровано.',
-      'auth/weak-password':'Пароль занадто простий.',
-      'auth/invalid-email':'Некоректний email.',
-      'auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.',
-    };
-    const msg = msgs[e.code] || e.message;
+    hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ');
+    const msg = e.code === 'auth/email-already-in-use' ? 'Email вже зареєстровано.'
+              : e.message;
     showMsg(errEl, msg);
-    showToast('❌ ' + msg,'error');
-    btn.disabled=false; btn.textContent='ЗАРЕЄСТРУВАТИСЬ';
   }
 }
 
-async function logout() {
-  await auth.signOut();
-  userNickname='';
-  document.getElementById('userPill').style.display='none';
-
-  // BUG1+BUG2: повністю скидаємо форму auth при logout
-  // щоб логін після logout працював і поля реєстрації не були заповнені
-  document.getElementById('loginEmail').value='';
-  document.getElementById('loginPass').value='';
-  document.getElementById('loginError').style.display='none';
-  document.getElementById('loginSuccess').style.display='none';
-  document.getElementById('regNick').value='';
-  document.getElementById('regEmail').value='';
-  document.getElementById('regPass').value='';
-  document.getElementById('regPass2').value='';
-  document.getElementById('regError').style.display='none';
-  document.getElementById('regSuccess').style.display='none';
-  document.getElementById('loginBtn').disabled=false;
-  document.getElementById('loginBtn').textContent='УВІЙТИ';
-  document.getElementById('regBtn').disabled=false;
-  document.getElementById('regBtn').textContent='ЗАРЕЄСТРУВАТИСЬ';
-  switchTab('login');
-
-  showScreen('screenAuth');
-  showToast('Ви вийшли.');
+function logout() {
+  auth.signOut().then(() => {
+    currentUser = null;
+    document.getElementById('userPill').style.display = 'none';
+    showScreen('screenAuth');
+    showToast('Ви вийшли.');
+  });
 }
 
-// Auth state observer — single source of truth
-auth.onAuthStateChanged(async user=>{
-  document.getElementById('loadingOverlay').classList.add('hidden');
-  if(user){
-    currentUser=user;
-    // Load nickname from Firestore
-    try {
-      const snap = await db.collection('users').doc(user.uid).get();
-      userNickname = snap.exists ? snap.data().nickname : user.email.split('@')[0];
-    } catch(e){ userNickname=user.email.split('@')[0]; }
-    enterApp();
+// ─── Auth state listener ──────────────────
+auth.onAuthStateChanged(async (fbUser) => {
+  if (fbUser) {
+    const userData = await dbGetUser(fbUser.uid);
+    if (!userData) {
+      // Registered but profile not yet saved (edge case)
+      await auth.signOut();
+      showScreen('screenAuth');
+      return;
+    }
+    currentUser = { uid: fbUser.uid, email: fbUser.email, nickname: userData.nickname };
+    document.getElementById('userPill').style.display = 'flex';
+    document.getElementById('userEmail').textContent  = userData.nickname + ' (' + fbUser.email + ')';
+    showScreen('screenMain');
+    await enterApp();
   } else {
-    currentUser=null;
-    // BUG1: скидаємо стан кнопок щоб логін після logout завжди працював
-    const lb=document.getElementById('loginBtn'),rb=document.getElementById('regBtn');
-    if(lb){lb.disabled=false;lb.textContent='УВІЙТИ';}
-    if(rb){rb.disabled=false;rb.textContent='ЗАРЕЄСТРУВАТИСЬ';}
+    currentUser = null;
     showScreen('screenAuth');
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-//  RACE LOCK
-// ═══════════════════════════════════════════════════════════════
-async function checkRaceStatus() {
-  const round=ACTIVE_ROUND;
-  const start=new Date(round.startDatetime);
-  const now=Date.now();
-  if(round.results){setRaceLocked(true,`Результати опубліковано — ${round.name}`);return;}
-  const cached=getRaceLockCache(round.id);
-  if(cached===true){setRaceLocked(true,'Заблоковано (кеш)');return;}
-  if(now>=start.getTime()){setRaceLockCache(round.id,true);setRaceLocked(true,`Старт вже відбувся`);return;}
-  const lastChecked=parseInt(localStorage.getItem('sgp_race_checked_'+round.id)||'0',10);
-  if(now-lastChecked<5*60*1000){
-    const diff=start.getTime()-now,h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
-    setRaceLocked(false,`До старту ~${h}г ${m}хв — ${round.name}`);return;
-  }
-  setBanner('checking','⏳ Перевірка...','');
-  try {
-    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent('https://fimspeedway.com/sgp/calendar')}`;
-    const res=await fetch(proxy,{signal:AbortSignal.timeout(6000)});
-    const data=await res.json();
-    const isLive=(data.contents||'').includes('"liveStreamingUrl"')&&!(data.contents||'').includes('"liveStreamingUrl":null');
-    localStorage.setItem('sgp_race_checked_'+round.id,String(now));
-    if(isLive){setRaceLockCache(round.id,true);setRaceLocked(true,'LIVE зараз!');return;}
-  } catch(e){}
-  const diff=start.getTime()-now,h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
-  setRaceLocked(false,`До старту ~${h}г ${m}хв — ${round.name}`);
-}
-
-function setRaceLocked(locked,reason) {
-  raceLocked=locked;
-  if(locked) setBanner('locked','🔒 Прийом прогнозів закрито',reason);
-  else       setBanner('open','✅ Прийом прогнозів відкрито',reason);
-  document.getElementById('footerStatus').textContent=reason;
-}
-
-function setBanner(type,title,desc) {
-  const b=document.getElementById('raceBanner');
-  b.className='race-banner '+type;
-  const icon=type==='locked'?'🔒':type==='open'?'✅':'<span class="spinner"></span>';
-  b.innerHTML=`<span class="race-banner-icon">${icon}</span><div class="race-banner-text"><strong>${escHtml(title)}</strong><span>${escHtml(desc)}</span></div>`;
-}
-
-function applyLockToForm() {
-  document.querySelectorAll('.rider-select').forEach(s=>s.disabled=true);
-  const s=document.getElementById('btnSave'),c=document.getElementById('btnClear');
-  if(s){s.disabled=true;s.textContent='🔒 ЗАБЛОКОВАНО';}
-  if(c)c.disabled=true;
-  document.getElementById('submitZoneTitle').textContent='🔒 Прийом закрито';
-  document.getElementById('submitZoneDesc').textContent='Гонка вже розпочалась.';
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  APP ENTRY
-// ═══════════════════════════════════════════════════════════════
-function enterApp() {
-  document.getElementById('userPill').style.display='flex';
-  document.getElementById('userNickname').textContent=userNickname;
-  showScreen('screenMain');
+async function enterApp() {
   renderRoundSelector();
-  updateActiveRoundHeader();
+  document.getElementById('activeRoundName').textContent = ACTIVE_ROUND.name;
+  document.getElementById('activeRoundCity').textContent = ACTIVE_ROUND.city + ' · ' + new Date(ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
   populateSelects();
-  checkRaceStatus().then(()=>{
-    if(raceLocked){
-      applyLockToForm();
-      const btn=document.getElementById('tabResultsBtn');
-      if(btn)btn.style.color='var(--accent)';
-      showTab('tabResults');
-    }
-    loadUserPrediction();
-  });
+  await checkRaceStatus();
+  await loadUserPrediction();
   renderAllPredictions();
+  if (raceLocked) {
+    applyLockToForm();
+    const btn = document.getElementById('tabResultsBtn');
+    if (btn) btn.style.color = 'var(--accent)';
+    showTab('tabResults');
+  }
+  // Init SWC (hidden)
   renderSwcRoundSelector();
   swcRenderTeamForm();
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  RACE LOCK CHECK
+// ═══════════════════════════════════════════
+async function checkRaceStatus() {
+  const round = ACTIVE_ROUND;
+  const start = new Date(round.startDatetime);
+  if (round.results) { setRaceLocked(true, `Результати опубліковано — ${round.name}`); return; }
+  if (Date.now() >= start.getTime()) { setRaceLocked(true, `Старт вже відбувся — ${start.toLocaleString('uk-UA')}`); return; }
+  const diff = start.getTime() - Date.now();
+  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
+  setRaceLocked(false, `До старту ~${h}г ${m}хв — ${round.name}`);
+}
+
+function setRaceLocked(locked, reason) {
+  raceLocked = locked;
+  if (locked) setBanner('locked','🔒 Прийом прогнозів закрито', reason);
+  else        setBanner('open',  '✅ Прийом прогнозів відкрито', reason);
+  document.getElementById('footerStatus').textContent = reason;
+}
+function setBanner(type, title, desc) {
+  const b = document.getElementById('raceBanner');
+  b.className = 'race-banner ' + type;
+  const icon = type==='locked'?'🔒':type==='open'?'✅':'<span class="spinner"></span>';
+  b.innerHTML = `<span class="race-banner-icon">${icon}</span>
+    <div class="race-banner-text"><strong>${title}</strong>
+    <span>${desc} · <a href="https://fimspeedway.com/sgp/calendar" target="_blank">fimspeedway.com</a></span></div>`;
+}
+function applyLockToForm() {
+  document.querySelectorAll('.rider-select').forEach(s => s.disabled = true);
+  const btnSave = document.getElementById('btnSave');
+  if (btnSave) { btnSave.disabled = true; btnSave.textContent = '🔒 ЗАБЛОКОВАНО'; }
+  const btnClear = document.getElementById('btnClear');
+  if (btnClear) btnClear.disabled = true;
+  document.getElementById('submitZoneTitle').textContent = '🔒 Прийом закрито';
+  document.getElementById('submitZoneDesc').textContent  = 'Гонка вже розпочалась.';
+}
+
+// ═══════════════════════════════════════════
+//  COMPETITION SWITCHER
+// ═══════════════════════════════════════════
+function switchCompetition(mode) {
+  currentCompetition = mode;
+  document.getElementById('btnSGP').className = 'comp-btn' + (mode==='SGP'?' active-sgp':'');
+  document.getElementById('btnSWC').className = 'comp-btn' + (mode==='SWC'?' active-swc':'');
+  document.getElementById('logoText').textContent = mode;
+  document.getElementById('logoSub').textContent  = mode==='SWC' ? 'Кубок Світу' : 'Оракул';
+  const sgpTabs  = document.querySelector('#screenMain > .nav-tabs');
+  const sgpTabDivs = ['tabMyPred','tabAllPreds','tabResults','tabSeason'];
+  if (mode === 'SWC') {
+    document.getElementById('roundSelectorWrap').style.display = 'none';
+    document.querySelector('.active-round-header').style.display = 'none';
+    if (sgpTabs) sgpTabs.style.display = 'none';
+    sgpTabDivs.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+    document.getElementById('swcScreen').style.display = '';
+    renderSwcRoundSelector();
+    swcCheckRaceStatus();
+    swcLoadUserPrediction();
+    swcRenderAllPredictions();
+  } else {
+    document.getElementById('roundSelectorWrap').style.display = '';
+    document.querySelector('.active-round-header').style.display = '';
+    if (sgpTabs) sgpTabs.style.display = '';
+    showTab('tabMyPred');
+    document.getElementById('swcScreen').style.display = 'none';
+    checkRaceStatus();
+  }
+}
+
+// ═══════════════════════════════════════════
 //  ROUND SELECTOR
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
 function renderRoundSelector() {
-  const wrap=document.getElementById('roundSelectorWrap');
-  if(!wrap)return;
-  wrap.innerHTML=SEASON.rounds.map(r=>{
-    const done=!!r.results,isActive=r.id===ACTIVE_ROUND.id;
-    const d=new Date(r.date),ds=d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
-    return `<button class="round-pill ${isActive?'active':''} ${done?'done':''}" onclick="switchRound('${r.id}')" title="${escHtml(r.name)}">${done?'✓ ':''}${ds}<br><span>${escHtml(r.city.split(',')[0])}</span></button>`;
+  const wrap = document.getElementById('roundSelectorWrap');
+  if (!wrap) return;
+  wrap.innerHTML = SEASON.rounds.map(r => {
+    const done = !!r.results, isActive = r.id === ACTIVE_ROUND.id;
+    const d = new Date(r.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
+    return `<button class="round-pill ${isActive?'active':''} ${done?'done':''}" onclick="switchRound('${r.id}')" title="${r.name}">
+      ${done?'✓':''} ${d}<br><span>${r.city.split(',')[0]}</span></button>`;
   }).join('');
 }
-
-function updateActiveRoundHeader() {
-  document.getElementById('activeRoundName').textContent=ACTIVE_ROUND.name;
-  document.getElementById('activeRoundCity').textContent=ACTIVE_ROUND.city+' · '+new Date(ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
-}
-
-function switchRound(id) {
-  ACTIVE_ROUND=SEASON.rounds.find(r=>r.id===id);
-  renderRoundSelector(); updateActiveRoundHeader();
-
-  // BUG6: скидаємо стан форми перед populateSelects,
-  // щоб disabled з попереднього locked раунду не залишались
-  document.querySelectorAll('.rider-select').forEach(s=>s.disabled=false);
-  const btnSave=document.getElementById('btnSave'),btnClear=document.getElementById('btnClear');
-  if(btnSave){btnSave.disabled=false;btnSave.textContent='💾 ЗБЕРЕГТИ';}
-  if(btnClear)btnClear.disabled=false;
-  document.getElementById('submitZoneTitle').textContent='Готові до збереження?';
-  document.getElementById('submitZoneDesc').textContent='Заповніть всі поля та натисніть «Зберегти».';
-
+async function switchRound(id) {
+  ACTIVE_ROUND = SEASON.rounds.find(r => r.id === id);
+  renderRoundSelector();
+  document.getElementById('activeRoundName').textContent = ACTIVE_ROUND.name;
+  document.getElementById('activeRoundCity').textContent = ACTIVE_ROUND.city + ' · ' + new Date(ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
   populateSelects();
-  raceLocked=false;
-  checkRaceStatus().then(()=>{ if(raceLocked)applyLockToForm(); loadUserPrediction(); });
+  raceLocked = false;
+  await checkRaceStatus();
+  await loadUserPrediction();
   renderAllPredictions();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  SELECTS
-// ═══════════════════════════════════════════════════════════════
-const EX_GROUPS=[['top2_1','top2_2'],['top8_1','top8_2','top8_3','top8_4','top8_5','top8_6'],['podium1','podium2','podium3']];
-
-function rebuildGroupOptions(g) {
-  const sel={};
-  g.forEach(id=>{const v=document.getElementById(id)?.value;if(v)sel[id]=v;});
-  g.forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    const taken=new Set(g.filter(oid=>oid!==id&&sel[oid]).map(oid=>sel[oid]));
-    Array.from(el.options).forEach(o=>{if(!o.value)return;o.disabled=taken.has(o.value);});
+// ═══════════════════════════════════════════
+//  RIDER SELECTS  —  mutual exclusion
+// ═══════════════════════════════════════════
+const EXCLUSIVE_GROUPS = [
+  ['top2_1','top2_2'],
+  ['top8_1','top8_2','top8_3','top8_4','top8_5','top8_6'],
+  ['podium1','podium2','podium3'],
+];
+function rebuildGroupOptions(groupIds) {
+  const selected = {};
+  groupIds.forEach(id => { const v = document.getElementById(id)?.value; if (v) selected[id] = v; });
+  groupIds.forEach(id => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const taken = new Set(groupIds.filter(o=>o!==id&&selected[o]).map(o=>selected[o]));
+    Array.from(sel.options).forEach(opt => { if (!opt.value) return; opt.disabled = taken.has(opt.value); });
   });
 }
-
+function onGroupChange(groupIds) { rebuildGroupOptions(groupIds); updatePreview(); }
 function populateSelects() {
-  const riders=ACTIVE_ROUND.riders;
-  ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    el.innerHTML='<option value="">— оберіть —</option>'+riders.map(r=>`<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+  const riders = ACTIVE_ROUND.riders;
+  ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id => {
+    const sel = document.getElementById(id); if (!sel) return;
+    sel.innerHTML = '<option value="">— оберіть —</option>' + riders.map(r=>`<option value="${r}">${r}</option>`).join('');
   });
-  EX_GROUPS.forEach(g=>g.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>{rebuildGroupOptions(g);updatePreview();});}));
-  ['loser','winner'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',updatePreview);});
+  EXCLUSIVE_GROUPS.forEach(g => g.forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.addEventListener('change', () => onGroupChange(g));
+  }));
+  ['loser','winner'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.addEventListener('change', updatePreview);
+  });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  FIRESTORE PREDICTIONS
-// ═══════════════════════════════════════════════════════════════
-async function savePrediction() {
-  // TC-016/SEC-003: подвійна перевірка lock — і локальна змінна, і час раунду
-  // щоб уникнути обходу через DevTools (raceLocked = false)
-  const _start = new Date(ACTIVE_ROUND.startDatetime);
-  const _locked = raceLocked || !!ACTIVE_ROUND.results || Date.now() >= _start.getTime();
-  if(_locked){showToast('🔒 Прогнози заблоковано!','error');return;}
-  if(!currentUser){showToast('Спочатку увійдіть','error');return;}
-  const d=getPredictionData();
-  const err=validatePrediction(d);
-  if(err){showToast(err,'error');return;}
-  const btn=document.getElementById('btnSave');
-  btn.disabled=true; btn.textContent='Збереження…';
-  try {
-    const ref=db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').doc(currentUser.uid);
-    await ref.set({
-      ...d,
-      nickname:userNickname,
-      email:currentUser.email,
-      uid:currentUser.uid,
-      savedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      roundId:ACTIVE_ROUND.id
-    });
-    showToast('✓ Прогноз збережено у Firebase!','success');
-    loadUserPrediction();
-    renderAllPredictions();
-  } catch(e){
-    showToast('Помилка збереження: '+e.message,'error');
-  }
-  btn.disabled=false; btn.textContent='💾 ОНОВИТИ';
-}
-
-async function loadUserPrediction() {
-  if(!currentUser)return;
-  const savedBlock=document.getElementById('savedPredBlock');
-  const scoreCard=document.getElementById('myScoreCard');
-  if(scoreCard)scoreCard.style.display='none';
-  try {
-    const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').doc(currentUser.uid).get();
-    if(snap.exists){
-      const mine=snap.data();
-      savedBlock.style.display='';
-      const t=mine.savedAt?.toDate?.()?.toLocaleString('uk-UA')||'—';
-      document.getElementById('savedTime').textContent='Збережено: '+t;
-      renderSavedGrid(mine);
-      ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
-        const el=document.getElementById(id);if(el&&mine[id])el.value=mine[id];
-      });
-      EX_GROUPS.forEach(g=>rebuildGroupOptions(g));
-      updatePreview();
-      if(!raceLocked){
-        const s=document.getElementById('btnSave');
-        if(s)s.textContent='💾 ОНОВИТИ';
-        document.getElementById('submitZoneTitle').textContent='Оновити прогноз';
-      }
-      if(raceLocked&&ACTIVE_ROUND.results){
-        const res=calcScore(mine,ACTIVE_ROUND.results);
-        if(scoreCard){
-          scoreCard.style.display='';
-          document.getElementById('myScoreNum').textContent=res.score;
-          const bd=res.breakdown;
-          document.getElementById('myScoreBreakdown').innerHTML=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2}]
-            .map(c=>`<div style="background:var(--surface);border:1px solid ${c.v>0?'rgba(48,209,88,.25)':'var(--border)'};border-radius:8px;padding:8px 12px;text-align:center"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase">${c.k}</div><div style="font-family:var(--font-head);font-size:22px;font-weight:900;color:${c.v>0?'var(--green)':'var(--muted)'}">${c.v??0}</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">/ ${c.max}</div></div>`).join('');
-        }
-      }
-    } else {
-      savedBlock.style.display='none';
-      document.querySelectorAll('.rider-select').forEach(s=>s.value='');
-      document.querySelectorAll('.rider-select option').forEach(o=>o.disabled=false);
-      const s=document.getElementById('btnSave');
-      if(s){s.textContent='💾 ЗБЕРЕГТИ';s.disabled=raceLocked;}
-      document.getElementById('submitZoneTitle').textContent='Готові до збереження?';
-      updatePreview();
-    }
-  } catch(e){ console.error('loadUserPrediction:',e); }
-}
-
-async function renderAllPredictions() {
-  const list=document.getElementById('allPredsList');
-  const countEl=document.getElementById('allCount');
-  if(!list)return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:12px"><span class="spinner"></span></div>';
-  try {
-    const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
-    if(countEl)countEl.textContent=snap.size+' прогнозів';
-    if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів ще немає</div>';return;}
-    list.innerHTML=snap.docs.map(doc=>{
-      const p=doc.data();
-      const isMe=currentUser&&doc.id===currentUser.uid;
-      const time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';
-      const top2=[p.top2_1,p.top2_2].map(r=>`<span class="chip top2">🏆 ${escHtml(r)}</span>`).join('');
-      const top8=[p.top8_1,p.top8_2,p.top8_3,p.top8_4,p.top8_5,p.top8_6].filter(Boolean).map(r=>`<span class="chip top8">${escHtml(r)}</span>`).join('');
-      const loser=p.loser?`<span class="chip loser">💀 ${escHtml(p.loser)}</span>`:'';
-      const podium=[p.podium1,p.podium2,p.podium3].filter(Boolean).map((r,i)=>`<span class="chip top2">${['🥇','🥈','🥉'][i]} ${escHtml(r)}</span>`).join('');
-      const winner=p.winner?`<span class="chip top2">🎯 ${escHtml(p.winner)}</span>`:'';
-      return `<div class="all-pred-card" style="${isMe?'border-color:rgba(212,240,0,.25);':''}"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${top2}${top8}${loser}${podium}${winner}</div></div>`;
-    }).join('');
-  } catch(e){ list.innerHTML=`<div style="text-align:center;padding:30px;color:var(--red);font-family:var(--font-mono);font-size:12px">Помилка: ${escHtml(e.message)}</div>`; }
-}
-
-function renderOfficialResults() {
-  const R=ACTIVE_ROUND.results,grid=document.getElementById('officialResultsGrid'),noRes=document.getElementById('noResultsMsg');
-  if(!grid)return;
-  if(!R){grid.innerHTML='';if(noRes)noRes.style.display='';return;}
-  if(noRes)noRes.style.display='none';
-  const items=[{lbl:'🥇 Переможець',val:R.winner,accent:true},{lbl:'🥈 2-ге',val:R.podium[1]},{lbl:'🥉 3-тє',val:R.podium[2]},
-    {lbl:'🏆 Фіналіст 1',val:R.top2[0],accent:true},{lbl:'🏆 Фіналіст 2',val:R.top2[1],accent:true},
-    {lbl:'Топ 8·3',val:R.top8[2]},{lbl:'Топ 8·4',val:R.top8[3]},{lbl:'Топ 8·5',val:R.top8[4]},{lbl:'Топ 8·6',val:R.top8[5]},{lbl:'Топ 8·7',val:R.top8[6]},{lbl:'Топ 8·8',val:R.top8[7]},
-    {lbl:'💀 16-те',val:(R.loser||'')+(R.loserIncident?' (+інцидент)':''),red:true}];
-  grid.innerHTML=items.map(i=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">${i.lbl}</div><div style="font-family:var(--font-head);font-size:14px;font-weight:700;color:${i.accent?'var(--accent)':i.red?'var(--red)':'var(--text)'}">${escHtml(String(i.val||'—'))}</div></div>`).join('');
-}
-
-async function renderLeaderboard() {
-  const R=ACTIVE_ROUND.results,list=document.getElementById('leaderboardList'),countEl=document.getElementById('lbCount');
-  if(!list)return;
-  if(!R){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результати ще не опубліковано</div>';return;}
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></div>';
-  try {
-    const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').get();
-    if(countEl)countEl.textContent=snap.size+' учасників';
-    if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів немає</div>';return;}
-    const scored=snap.docs.map(doc=>({uid:doc.id,...doc.data(),...calcScore(doc.data(),R)})).sort((a,b)=>b.score-a.score);
-    const emoji=['🥇','🥈','🥉'];
-    let prevScore=null,rank=0,display=0;
-    list.innerHTML=scored.map(p=>{
-      display++;if(p.score!==prevScore){rank=display;prevScore=p.score;}
-      const isMe=currentUser&&p.uid===currentUser.uid;
-      const rankColor=rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
-      const bd=p.breakdown||{};
-      const chips=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2}]
-        .map(c=>`<span class="lb-chip ${c.v>0?'has-pts':''}">${c.k}: ${c.v??0}</span>`).join('');
-      return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;
-    }).join('');
-  } catch(e){ list.innerHTML=`<div style="color:var(--red);padding:20px;font-family:var(--font-mono);font-size:12px">Помилка: ${escHtml(e.message)}</div>`; }
-}
-
-async function renderSeasonStandings() {
-  const list=document.getElementById('seasonStandingsList');
-  if(!list)return;
-  const completed=SEASON.rounds.filter(r=>r.results);
-  document.getElementById('seasonRoundsCount').textContent=`${completed.length} / ${SEASON.rounds.length} раундів`;
-  if(!completed.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результатів ще немає</div>';return;}
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></div>';
-  try {
-    const userMap={};
-    for(const round of completed){
-      const snap=await db.collection('predictions').doc(round.id).collection('users').get();
-      snap.docs.forEach(doc=>{
-        const p=doc.data();
-        if(!userMap[doc.id])userMap[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,roundCount:0};
-        const {score}=calcScore(p,round.results);
-        userMap[doc.id].rounds[round.id]=score;
-        userMap[doc.id].total+=score;
-        userMap[doc.id].roundCount++;
-      });
-    }
-    const users=Object.values(userMap).sort((a,b)=>b.total-a.total);
-    if(!users.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Немає даних</div>';return;}
-    const emoji=['🥇','🥈','🥉'];
-    let prevTotal=null,rank=0,display=0;
-    list.innerHTML=users.map(u=>{
-      display++;if(u.total!==prevTotal){rank=display;prevTotal=u.total;}
-      const isMe=currentUser&&u.uid===currentUser.uid;
-      const rankColor=rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
-      const cells=completed.map(r=>{const sc=u.rounds[r.id];return `<div style="text-align:center;min-width:36px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${escHtml(r.city.split(',')[0].substring(0,6))}</div><div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${sc!==undefined?'var(--text)':'var(--muted)'}">${sc!==undefined?sc:'—'}</div></div>`;}).join('');
-      return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info" style="flex:1"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div><div style="text-align:right"><div class="lb-score">${u.total}</div><div class="lb-score-lbl">${u.roundCount} раундів</div></div></div>`;
-    }).join('');
-  } catch(e){ list.innerHTML=`<div style="color:var(--red);padding:20px;font-family:var(--font-mono);font-size:12px">Помилка: ${escHtml(e.message)}</div>`; }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  FORM HELPERS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  SGP PREDICTION FORM
+// ═══════════════════════════════════════════
 function getPredictionData() {
-  return {top2_1:document.getElementById('top2_1').value,top2_2:document.getElementById('top2_2').value,top8_1:document.getElementById('top8_1').value,top8_2:document.getElementById('top8_2').value,top8_3:document.getElementById('top8_3').value,top8_4:document.getElementById('top8_4').value,top8_5:document.getElementById('top8_5').value,top8_6:document.getElementById('top8_6').value,loser:document.getElementById('loser').value,podium1:document.getElementById('podium1').value,podium2:document.getElementById('podium2').value,podium3:document.getElementById('podium3').value,winner:document.getElementById('winner').value};
+  return { top2_1:document.getElementById('top2_1').value, top2_2:document.getElementById('top2_2').value,
+    top8_1:document.getElementById('top8_1').value, top8_2:document.getElementById('top8_2').value,
+    top8_3:document.getElementById('top8_3').value, top8_4:document.getElementById('top8_4').value,
+    top8_5:document.getElementById('top8_5').value, top8_6:document.getElementById('top8_6').value,
+    loser:document.getElementById('loser').value,
+    podium1:document.getElementById('podium1').value, podium2:document.getElementById('podium2').value,
+    podium3:document.getElementById('podium3').value, winner:document.getElementById('winner').value };
 }
-
 function updatePreview() {
-  const d=getPredictionData();
-  const t2=[d.top2_1,d.top2_2].filter(Boolean).length,t8=[d.top8_1,d.top8_2,d.top8_3,d.top8_4,d.top8_5,d.top8_6].filter(Boolean).length;
-  const lf=d.loser?1:0,pf=[d.podium1,d.podium2,d.podium3].filter(Boolean).length,wf=d.winner?1:0;
-  const total=t2+t8+lf+pf+wf;
-  document.getElementById('previewTop2').textContent=t2;document.getElementById('previewTop8').textContent=t8;
-  document.getElementById('previewLoser').textContent=lf;document.getElementById('previewPodium').textContent=pf;
-  document.getElementById('previewWinner').textContent=wf;document.getElementById('previewTotal').textContent=total;
-  document.getElementById('previewFilled').textContent=total+' / 13';
-  const t8vals=[d.top8_1,d.top8_2,d.top8_3,d.top8_4,d.top8_5,d.top8_6].filter(Boolean);
-  const dupe=[d.top2_1,d.top2_2].filter(Boolean).length!==new Set([d.top2_1,d.top2_2].filter(Boolean)).size||t8vals.length!==new Set(t8vals).size;
-  document.getElementById('submitZoneDesc').textContent=dupe?'⚠️ Є повторювані гонщики!':total===13?'✓ Всі поля заповнено.':'Залишилось '+(13-total)+' полів.';
+  const d = getPredictionData();
+  const t2 = [d.top2_1,d.top2_2].filter(Boolean).length;
+  const t8 = [d.top8_1,d.top8_2,d.top8_3,d.top8_4,d.top8_5,d.top8_6].filter(Boolean).length;
+  const lo = d.loser?1:0, po = [d.podium1,d.podium2,d.podium3].filter(Boolean).length, wi = d.winner?1:0;
+  const total = t2+t8+lo+po+wi;
+  document.getElementById('previewTop2').textContent   = t2;
+  document.getElementById('previewTop8').textContent   = t8;
+  document.getElementById('previewLoser').textContent  = lo;
+  document.getElementById('previewPodium').textContent = po;
+  document.getElementById('previewWinner').textContent = wi;
+  document.getElementById('previewTotal').textContent  = total;
+  document.getElementById('previewFilled').textContent = total + ' / 13';
+  const t2Dupe = [d.top2_1,d.top2_2].filter(Boolean).length !== new Set([d.top2_1,d.top2_2].filter(Boolean)).size;
+  const t8Vals = [d.top8_1,d.top8_2,d.top8_3,d.top8_4,d.top8_5,d.top8_6].filter(Boolean);
+  document.getElementById('submitZoneDesc').textContent = (t2Dupe || t8Vals.length!==new Set(t8Vals).size)
+    ? '⚠️ Є повторювані гонщики!'
+    : total===13 ? '✓ Всі поля заповнено.' : `Залишилось ${13-total} полів.`;
 }
-
 function validatePrediction(d) {
-  if(!d.top2_1||!d.top2_2)return 'Оберіть двох фіналістів Топ 2.';
-  if(d.top2_1===d.top2_2)return 'Топ 2: різні гонщики.';
+  if (!d.top2_1||!d.top2_2)          return 'Оберіть двох фіналістів Топ 2.';
+  if (d.top2_1===d.top2_2)            return 'Топ 2: різні гонщики.';
   const t8=[d.top8_1,d.top8_2,d.top8_3,d.top8_4,d.top8_5,d.top8_6];
-  if(t8.some(v=>!v))return 'Заповніть усі 6 слотів Топ 8.';
-  if(new Set(t8).size!==6)return 'Топ 8: всі різні.';
-  if(!d.loser)return 'Оберіть Невдаху дня.';
-  if(!d.podium1||!d.podium2||!d.podium3)return 'Заповніть Подіум (3 місця).';
-  if(new Set([d.podium1,d.podium2,d.podium3]).size!==3)return 'Подіум: всі різні.';
-  if(!d.winner)return 'Оберіть Переможця.';
+  if (t8.some(v=>!v))                 return 'Заповніть усі 6 слотів Топ 8.';
+  if (new Set(t8).size!==6)           return 'Топ 8: всі різні.';
+  if (!d.loser)                       return 'Оберіть Невдаху дня.';
+  if (!d.podium1||!d.podium2||!d.podium3) return 'Заповніть Подіум.';
+  if (new Set([d.podium1,d.podium2,d.podium3]).size!==3) return 'Подіум: всі різні.';
+  if (!d.winner)                      return 'Оберіть Переможця.';
   return null;
 }
-
+async function savePrediction() {
+  if (raceLocked)    { showToast('Прогнози заблоковано!','error'); return; }
+  if (!currentUser)  { showToast('Спочатку увійдіть','error'); return; }
+  const d   = getPredictionData();
+  const err = validatePrediction(d);
+  if (err) { showToast(err,'error'); return; }
+  showLoading('btnSave','ЗБЕРЕЖЕННЯ...');
+  try {
+    await dbSavePred('sgp_preds', ACTIVE_ROUND.id, currentUser.uid, {
+      ...d, nickname: currentUser.nickname, email: currentUser.email,
+      uid: currentUser.uid, savedAt: new Date().toISOString()
+    });
+    showToast('✓ Прогноз збережено!','success');
+    await loadUserPrediction();
+    renderAllPredictions();
+  } catch(e) { showToast('Помилка збереження: ' + e.message,'error'); }
+  hideLoading('btnSave','💾 ОНОВИТИ');
+}
 function clearForm() {
-  if(raceLocked)return;
-  document.querySelectorAll('.rider-select').forEach(s=>s.value='');
-  document.querySelectorAll('.rider-select option').forEach(o=>o.disabled=false);
+  if (raceLocked) return;
+  document.querySelectorAll('.rider-select').forEach(s => s.value = '');
+  document.querySelectorAll('.rider-select option').forEach(o => o.disabled = false);
   updatePreview();
 }
-
-function renderSavedGrid(p) {
-  const grid=document.getElementById('savedGrid');
-  const items=[{lbl:'🏆 Фіналіст 1',val:p.top2_1,cls:'accent'},{lbl:'🏆 Фіналіст 2',val:p.top2_2,cls:'accent'},{lbl:'Топ 8·3',val:p.top8_1},{lbl:'Топ 8·4',val:p.top8_2},{lbl:'Топ 8·5',val:p.top8_3},{lbl:'Топ 8·6',val:p.top8_4},{lbl:'Топ 8·7',val:p.top8_5},{lbl:'Топ 8·8',val:p.top8_6},{lbl:'💀 Невдача',val:p.loser,cls:'red'},{lbl:'🥇 Подіум 1',val:p.podium1,cls:'accent'},{lbl:'🥈 Подіум 2',val:p.podium2},{lbl:'🥉 Подіум 3',val:p.podium3},{lbl:'🎯 Переможець',val:p.winner,cls:'accent'}];
-  grid.innerHTML=items.map(i=>`<div class="saved-item"><div class="saved-item-lbl">${i.lbl}</div><div class="saved-item-val ${i.cls||''}">${escHtml(i.val||'—')}</div></div>`).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  NAV
-// ═══════════════════════════════════════════════════════════════
-function showTab(id) {
-  ['tabMyPred','tabAllPreds','tabResults','tabSeason'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});
-  document.querySelectorAll('#screenMain>.nav-tabs .nav-tab').forEach(btn=>{const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];btn.classList.toggle('active',t===id);});
-  if(id==='tabAllPreds')renderAllPredictions();
-  if(id==='tabResults'){renderOfficialResults();renderLeaderboard();}
-  if(id==='tabSeason')renderSeasonStandings();
-}
-
-function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-function showMsg(el,msg){el.textContent=msg;el.style.display='';}
-function escHtml(str){return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-
-let toastTimer;
-function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);}
-
-// ═══════════════════════════════════════════════════════════════
-//  SWC CONFIG — 2026 (FIX: LEBEDEVS вилучений з Ukraine)
-// ═══════════════════════════════════════════════════════════════
-const COUNTRY_FLAGS={'Poland':'🇵🇱','Australia':'🇦🇺','Great Britain':'🇬🇧','Germany':'🇩🇪','Czech Republic':'🇨🇿','Ukraine':'🇺🇦','Latvia':'🇱🇻','Denmark':'🇩🇰','Norway':'🇳🇴','Sweden':'🇸🇪'};
-const SWC_TEAMS={'Poland':{riders:['ZMARZLIK','KUBERA','DUDEK','JANOWSKI','KOLODZIEJ']},'Australia':{riders:['HOLDER','FRICKE','DOYLE','LAMBERT']},'Great Britain':{riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK']},'Germany':{riders:['HUCKENBECK','KVECH','ERNST','REISSIG']},'Czech Republic':{riders:['VACULIK','MILIK','CHLUPAC','HAJEK']},'Ukraine':{riders:['PARNICKI','OSTERGAARD','TROFIMOV','HNIDENKO']},'Latvia':{riders:['LEBEDEVS','PAVLOVS','LAHNO','HNIDENKO']},'Denmark':{riders:['MICHELSEN','LINDGREN','JEPSEN','PEDERSEN']},'Norway':{riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN']},'Sweden':{riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON']}};
-const SWC_SEASON={year:2026,rounds:[
-  {id:'swc_sf1',name:'Semi-Final 1',city:'Landshut, Germany',date:'2026-05-01',startDatetime:'2026-05-01T18:00:00',format:'semi-final',teams:['Germany','Czech Republic','Great Britain','Ukraine'],qualifiers:1,results:null},
-  {id:'swc_sf2',name:'Semi-Final 2',city:'Riga, Latvia',date:'2026-08-07',startDatetime:'2026-08-07T18:00:00',format:'semi-final',teams:['Latvia','Denmark','Norway','Sweden'],qualifiers:1,results:null},
-  {id:'swc_final',name:'Final',city:'Warsaw, Poland',date:'2026-08-29',startDatetime:'2026-08-29T18:00:00',format:'final',teamsBase:['Poland','Australia'],get teams(){const r1=SWC_SEASON.rounds[0],r2=SWC_SEASON.rounds[1];return['Poland','Australia',r1?.results?.qualified||'Winner SF1',r2?.results?.qualified||'Winner SF2'];},qualifiers:0,results:null}
-]};
-let SWC_ACTIVE_ROUND=SWC_SEASON.rounds[0];
-let swcRaceLocked=false;
-let currentCompetition='SGP';
-
-function switchCompetition(mode){
-  currentCompetition=mode;
-  document.getElementById('btnSGP').className='comp-btn'+(mode==='SGP'?' active-sgp':'');
-  document.getElementById('btnSWC').className='comp-btn'+(mode==='SWC'?' active-swc':'');
-  document.getElementById('logoText').textContent=mode;
-  document.getElementById('logoSub').textContent=mode==='SWC'?'Кубок Світу':'Оракул';
-  const rs=document.getElementById('roundSelectorWrap'),ah=document.querySelector('.active-round-header'),nt=document.querySelector('#screenMain>.nav-tabs');
-  const tabs=['tabMyPred','tabAllPreds','tabResults','tabSeason'];
-  if(mode==='SWC'){
-    if(rs)rs.style.display='none';if(ah)ah.style.display='none';if(nt)nt.style.display='none';
-    tabs.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-    document.getElementById('swcScreen').style.display='';
-    renderSwcRoundSelector();swcCheckRaceStatus();swcLoadUserPrediction();swcRenderAllPredictions();
+async function loadUserPrediction() {
+  if (!currentUser) return;
+  const mine = await dbGetPred('sgp_preds', ACTIVE_ROUND.id, currentUser.uid);
+  const savedBlock = document.getElementById('savedPredBlock');
+  const scoreCard  = document.getElementById('myScoreCard');
+  if (scoreCard) scoreCard.style.display = 'none';
+  if (mine) {
+    savedBlock.style.display = '';
+    document.getElementById('savedTime').textContent = 'Збережено: ' + new Date(mine.savedAt).toLocaleString('uk-UA');
+    renderSavedGrid(mine);
+    ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id => {
+      const sel = document.getElementById(id); if (sel && mine[id]) sel.value = mine[id];
+    });
+    EXCLUSIVE_GROUPS.forEach(g => rebuildGroupOptions(g));
+    updatePreview();
+    if (!raceLocked) {
+      document.getElementById('btnSave').textContent = '💾 ОНОВИТИ';
+      document.getElementById('submitZoneTitle').textContent = 'Оновити прогноз';
+    }
+    if (raceLocked && ACTIVE_ROUND.results && scoreCard) {
+      const result = calcScore(mine, ACTIVE_ROUND.results);
+      scoreCard.style.display = '';
+      document.getElementById('myScoreNum').textContent = result.score;
+      const bd = result.breakdown;
+      document.getElementById('myScoreBreakdown').innerHTML = [
+        {k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},
+        {k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2},
+      ].map(c=>`<div style="background:var(--surface);border:1px solid ${c.v>0?'rgba(48,209,88,.25)':'var(--border)'};border-radius:8px;padding:8px 12px;text-align:center">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">${c.k}</div>
+        <div style="font-family:var(--font-head);font-size:22px;font-weight:900;color:${c.v>0?'var(--green)':'var(--muted)'}">${c.v??0}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">/ ${c.max}</div>
+      </div>`).join('');
+    }
   } else {
-    if(rs)rs.style.display='';if(ah)ah.style.display='';if(nt)nt.style.display='';
-    document.getElementById('swcScreen').style.display='none';
-    showTab('tabMyPred');checkRaceStatus();
+    savedBlock.style.display = 'none';
+    document.querySelectorAll('.rider-select').forEach(s => s.value = '');
+    document.querySelectorAll('.rider-select option').forEach(o => o.disabled = false);
+    const b = document.getElementById('btnSave');
+    if (b) { b.textContent = '💾 ЗБЕРЕГТИ'; b.disabled = raceLocked; }
+    document.getElementById('submitZoneTitle').textContent = 'Готові до збереження?';
+    updatePreview();
   }
 }
+function renderSavedGrid(p) {
+  const grid = document.getElementById('savedGrid');
+  [{lbl:'🏆 Фіналіст 1',val:p.top2_1,cls:'accent'},{lbl:'🏆 Фіналіст 2',val:p.top2_2,cls:'accent'},
+   {lbl:'Топ 8·3',val:p.top8_1},{lbl:'Топ 8·4',val:p.top8_2},{lbl:'Топ 8·5',val:p.top8_3},
+   {lbl:'Топ 8·6',val:p.top8_4},{lbl:'Топ 8·7',val:p.top8_5},{lbl:'Топ 8·8',val:p.top8_6},
+   {lbl:'💀 Невдача',val:p.loser,cls:'red'},
+   {lbl:'🥇 Подіум 1',val:p.podium1,cls:'accent'},{lbl:'🥈 Подіум 2',val:p.podium2},{lbl:'🥉 Подіум 3',val:p.podium3},
+   {lbl:'🎯 Переможець',val:p.winner,cls:'accent'},
+  ].reduce((html,i) => html + `<div class="saved-item"><div class="saved-item-lbl">${i.lbl}</div><div class="saved-item-val ${i.cls||''}">${i.val||'—'}</div></div>`, '', grid.innerHTML = '', grid.innerHTML);
+}
 
+// ═══════════════════════════════════════════
+//  ALL PREDICTIONS
+// ═══════════════════════════════════════════
+async function renderAllPredictions() {
+  const list = document.getElementById('allPredsList');
+  const countEl = document.getElementById('allCount');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-log" style="padding:30px">Завантаження...</div>';
+  try {
+    const entries = await dbGetAllPreds('sgp_preds', ACTIVE_ROUND.id);
+    if (countEl) countEl.textContent = entries.length + ' прогнозів';
+    if (!entries.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів ще немає</div>'; return; }
+    entries.sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+    list.innerHTML = entries.map(p => {
+      const isMe = currentUser && p.uid === currentUser.uid;
+      const time = new Date(p.savedAt).toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const top2 = [p.top2_1,p.top2_2].map(r=>`<span class="chip top2">🏆 ${r}</span>`).join('');
+      const top8 = [p.top8_1,p.top8_2,p.top8_3,p.top8_4,p.top8_5,p.top8_6].filter(Boolean).map(r=>`<span class="chip top8">${r}</span>`).join('');
+      const loser = p.loser?`<span class="chip loser">💀 ${p.loser}</span>`:'';
+      const podium = [p.podium1,p.podium2,p.podium3].filter(Boolean).map((r,i)=>`<span class="chip top2">${['🥇','🥈','🥉'][i]} ${r}</span>`).join('');
+      const winner = p.winner?`<span class="chip top2">🎯 ${p.winner}</span>`:'';
+      return `<div class="all-pred-card" style="${isMe?'border-color:rgba(212,240,0,.25);':''}">
+        <div class="all-pred-card-top">
+          <span class="all-pred-nickname">${escHtml(p.nickname)}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</span>
+          <span class="all-pred-time">${time}</span>
+        </div>
+        <div class="all-pred-chips">${top2}${top8}${loser}${podium}${winner}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { list.innerHTML = `<div style="padding:20px;color:var(--red);font-size:13px">Помилка: ${e.message}</div>`; }
+}
+
+// ═══════════════════════════════════════════
+//  RESULTS & LEADERBOARD
+// ═══════════════════════════════════════════
+function renderOfficialResults() {
+  const R = ACTIVE_ROUND.results;
+  const grid = document.getElementById('officialResultsGrid');
+  const noR  = document.getElementById('noResultsMsg');
+  if (!grid) return;
+  if (!R) { grid.innerHTML=''; if(noR) noR.style.display=''; return; }
+  if (noR) noR.style.display = 'none';
+  [{lbl:'🥇 Переможець',val:R.winner,accent:true},{lbl:'🥈 2-ге',val:R.podium[1]},{lbl:'🥉 3-тє',val:R.podium[2]},
+   {lbl:'🏆 Фіналіст 1',val:R.top2[0],accent:true},{lbl:'🏆 Фіналіст 2',val:R.top2[1],accent:true},
+   ...R.top8.slice(2).map((v,i)=>({lbl:`Топ 8·${i+3}`,val:v})),
+   {lbl:'💀 16-те',val:R.loser+(R.loserIncident?' (+інц.)':''),red:true},
+  ].reduce((_, i) => {
+    grid.innerHTML += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px">${i.lbl}</div>
+      <div style="font-family:var(--font-head);font-size:14px;font-weight:700;color:${i.accent?'var(--accent)':i.red?'var(--red)':'var(--text)'}">${i.val||'—'}</div>
+    </div>`;
+  }, grid.innerHTML = '');
+}
+async function renderLeaderboard() {
+  const R = ACTIVE_ROUND.results;
+  const list = document.getElementById('leaderboardList');
+  const countEl = document.getElementById('lbCount');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-log" style="padding:30px">Завантаження...</div>';
+  const entries = await dbGetAllPreds('sgp_preds', ACTIVE_ROUND.id);
+  if (countEl) countEl.textContent = entries.length + ' учасників';
+  if (!entries.length || !R) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">${!R?'Результати ще не опубліковано':'Прогнозів немає'}</div>`;
+    return;
+  }
+  const scored = entries.map(p => ({...p,...calcScore(p,R)})).sort((a,b)=>b.score-a.score);
+  const emoji = ['🥇','🥈','🥉'];
+  let prevScore=null, rank=0, display=0;
+  list.innerHTML = scored.map(p => {
+    display++;
+    if (p.score!==prevScore) { rank=display; prevScore=p.score; }
+    const isMe = currentUser && p.uid===currentUser.uid;
+    const rankColor = rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
+    const rankStr = rank<=3 ? emoji[rank-1] : rank+'.';
+    const bd = p.breakdown||{};
+    const chips = [{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2}]
+      .map(c=>`<span class="lb-chip ${c.v>0?'has-pts':''}">${c.k}: ${c.v??0}</span>`).join('');
+    return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}">
+      <div class="lb-rank" style="color:${rankColor}">${rankStr}</div>
+      <div class="lb-info"><div class="lb-nick">${escHtml(p.nickname)}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div>
+      <div><div class="lb-score">${p.score}</div><div class="lb-score-lbl">балів</div></div>
+    </div>`;
+  }).join('');
+}
+async function renderSeasonStandings() {
+  const list = document.getElementById('seasonStandingsList');
+  if (!list) return;
+  const completed = SEASON.rounds.filter(r=>r.results);
+  document.getElementById('seasonRoundsCount').textContent = `${completed.length} / ${SEASON.rounds.length} раундів`;
+  if (!completed.length) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Сезон ще не розпочався</div>'; return; }
+  list.innerHTML = '<div class="empty-log" style="padding:20px">Завантаження...</div>';
+  const allPreds = await dbGetSeasonPreds('sgp_preds', completed.map(r=>r.id));
+  const userMap = {};
+  completed.forEach(round => {
+    (allPreds[round.id]||[]).forEach(p => {
+      if (!userMap[p.uid]) userMap[p.uid] = { nickname:p.nickname, rounds:{}, total:0, roundCount:0 };
+      const {score} = calcScore(p, round.results);
+      userMap[p.uid].rounds[round.id] = score;
+      userMap[p.uid].total += score;
+      userMap[p.uid].roundCount++;
+    });
+  });
+  const users = Object.values(userMap).sort((a,b)=>b.total-a.total);
+  if (!users.length) { list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Немає даних</div>'; return; }
+  const emoji = ['🥇','🥈','🥉'];
+  let prev=null, rank=0, display=0;
+  list.innerHTML = users.map(u => {
+    display++;
+    if (u.total!==prev) { rank=display; prev=u.total; }
+    const isMe = currentUser && currentUser.nickname === u.nickname;
+    const rankColor = rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
+    const cells = completed.map(r=>`<div style="text-align:center;min-width:36px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${r.city.split(',')[0].substring(0,6)}</div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${u.rounds[r.id]!==undefined?'var(--text)':'var(--muted)'}">${u.rounds[r.id]!==undefined?u.rounds[r.id]:'—'}</div>
+    </div>`).join('');
+    return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}" style="flex-wrap:wrap;gap:8px">
+      <div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div>
+      <div class="lb-info" style="flex:1;min-width:120px"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div>
+      <div style="text-align:right"><div class="lb-score">${u.total}</div><div class="lb-score-lbl">${u.roundCount} р.</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  SWC
+// ═══════════════════════════════════════════
 function swcCheckRaceStatus() {
   const round = SWC_ACTIVE_ROUND;
   const start = new Date(round.startDatetime);
@@ -1163,10 +1942,21 @@ function swcReleaseLock() {
   document.querySelectorAll('#swcFormWrap .swc-team-select, #swcFormWrap .swc-rider-select, #swcLoserTeam').forEach(s=>s.disabled=false);
   const b=document.getElementById('swcBtnSave'); if(b){b.disabled=false;b.textContent='💾 ЗБЕРЕГТИ';}
 }
-
-function renderSwcRoundSelector(){const wrap=document.getElementById('swcRoundSelectorWrap');if(!wrap)return;wrap.innerHTML=SWC_SEASON.rounds.map(r=>{const done=!!r.results,isA=r.id===SWC_ACTIVE_ROUND.id,d=new Date(r.date),ds=d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});return`<button class="round-pill ${isA?'active':''} ${done?'done':''}" onclick="switchSwcRound('${r.id}')">${done?'✓ ':''}${ds}<br><span>${escHtml(r.name)}</span></button>`;}).join('');document.getElementById('swcRoundName').textContent=SWC_ACTIVE_ROUND.name;document.getElementById('swcRoundCity').textContent=SWC_ACTIVE_ROUND.city+' · '+new Date(SWC_ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});}
-function switchSwcRound(id){SWC_ACTIVE_ROUND=SWC_SEASON.rounds.find(r=>r.id===id);renderSwcRoundSelector();swcCheckRaceStatus();swcRenderTeamForm();swcLoadUserPrediction();swcRenderAllPredictions();}
-
+function renderSwcRoundSelector() {
+  const wrap = document.getElementById('swcRoundSelectorWrap'); if(!wrap) return;
+  wrap.innerHTML = SWC_SEASON.rounds.map(r => {
+    const done=!!r.results, isActive=r.id===SWC_ACTIVE_ROUND.id;
+    const d=new Date(r.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
+    return `<button class="round-pill ${isActive?'active':''} ${done?'done':''}" onclick="switchSwcRound('${r.id}')" title="${r.name}">${done?'✓':''} ${d}<br><span>${r.name}</span></button>`;
+  }).join('');
+  document.getElementById('swcRoundName').textContent = SWC_ACTIVE_ROUND.name;
+  document.getElementById('swcRoundCity').textContent = SWC_ACTIVE_ROUND.city+' · '+new Date(SWC_ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+}
+async function switchSwcRound(id) {
+  SWC_ACTIVE_ROUND = SWC_SEASON.rounds.find(r=>r.id===id);
+  renderSwcRoundSelector(); swcCheckRaceStatus(); swcRenderTeamForm();
+  await swcLoadUserPrediction(); swcRenderAllPredictions();
+}
 function swcRenderTeamForm() {
   const round=SWC_ACTIVE_ROUND, teams=round.teams||round.teamsBase||[], n=teams.length;
   const wrap=document.getElementById('swcTeamSections'); if(!wrap) return;
@@ -1224,7 +2014,6 @@ function swcRenderTeamForm() {
   swcUpdatePreview();
   if(swcRaceLocked) swcApplyLock();
 }
-
 function swcOnTeamSelect() {
   const sels=Array.from(document.querySelectorAll('.swc-team-select'));
   sels.forEach(sel=>{
@@ -1248,13 +2037,6 @@ function swcUpdatePreview() {
     ? '✓ Всі поля заповнено.'
     : `Залишилось ${total-filled} полів (рейтинг: ${n-rankFilled}, гонщики: ${n-riderFilled}, невдаха: ${1-loserFilled}).`;
 }
-// BUG4: swcClearForm була викликана в HTML але не визначена
-function swcClearForm() {
-  if(swcRaceLocked)return;
-  document.querySelectorAll('.swc-team-select,.swc-rider-select').forEach(s=>{s.value='';Array.from(s.options).forEach(o=>o.disabled=false);});
-  const loserEl=document.getElementById('swcLoserTeam'); if(loserEl) loserEl.value='';
-  swcUpdatePreview();
-}
 function swcGetPrediction() {
   const teams = (SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
   // Category 1: team ranking
@@ -1272,8 +2054,18 @@ function swcGetPrediction() {
   const loserTeam = document.getElementById('swcLoserTeam')?.value || null;
   return { teams: rankPicks, topRiders: topRiderPicks, loserTeam };
 }
-function swcValidate(picks){const n=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця.`;}if(new Set(Object.values(picks)).size!==Object.values(picks).length)return'Кожна команда на одному місці.';return null;}
-
+function swcValidatePrediction(picks) {
+  const n = (SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;
+  // Check ranking
+  for(let i=1;i<=n;i++) if(!picks.teams?.[`rank${i}`]) return `Оберіть команду для ${i}-го місця.`;
+  if(new Set(Object.values(picks.teams)).size !== n) return 'Кожна команда — тільки на одному місці.';
+  // Check top riders
+  const teams = SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[];
+  for(const t of teams) if(!picks.topRiders?.[t]) return `Оберіть топ гонщика для команди ${t}.`;
+  // Check loser
+  if(!picks.loserTeam) return 'Оберіть команду-невдаху.';
+  return null;
+}
 async function swcSavePrediction() {
   if(swcRaceLocked){showToast('SWC прогнози заблоковано!','error');return;}
   if(!currentUser){showToast('Спочатку увійдіть','error');return;}
@@ -1288,7 +2080,12 @@ async function swcSavePrediction() {
   } catch(e){showToast('Помилка: '+e.message,'error');}
   hideLoading('swcBtnSave','💾 ОНОВИТИ');
 }
-
+function swcClearForm() {
+  if(swcRaceLocked)return;
+  document.querySelectorAll('.swc-team-select,.swc-rider-select').forEach(s=>{s.value='';Array.from(s.options).forEach(o=>o.disabled=false);});
+  const loserEl=document.getElementById('swcLoserTeam'); if(loserEl) loserEl.value='';
+  swcUpdatePreview();
+}
 async function swcLoadUserPrediction() {
   if(!currentUser)return;
   const mine=await dbGetPred('swc_preds',SWC_ACTIVE_ROUND.id,currentUser.uid);
@@ -1339,7 +2136,6 @@ async function swcLoadUserPrediction() {
     swcUpdatePreview();
   }
 }
-
 function swcRenderSavedGrid(mine) {
   const grid=document.getElementById('swcSavedGrid'); if(!grid)return;
   const emoji=['🥇','🥈','🥉','4️⃣'];
@@ -1353,45 +2149,6 @@ function swcRenderSavedGrid(mine) {
     : '';
   grid.innerHTML = rankItems.join('') + riderItems.join('') + loserItem;
 }
-function swcCalcScore(picks, results) {
-  if (!picks || !results) return { score:0, breakdown:{ranking:0,topRiders:0,loser:0}, details:[] };
-  let score = 0;
-  const breakdown = { ranking:0, topRiders:0, loser:0 };
-  const details = [];
-
-  // ── Категорія 1: Топ 4 команди — 1 пункт за точну позицію ──
-  const ranking = results.ranking || [];
-  const rankPicks = Object.entries(picks.teams||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4)));
-  rankPicks.forEach(([rank, team]) => {
-    const pos = parseInt(rank.slice(4)) - 1;
-    const pts = ranking[pos] === team ? 1 : 0;
-    score += pts; breakdown.ranking += pts;
-    const emoji = ['🥇','🥈','🥉','4️⃣'][pos] || `${pos+1}.`;
-    details.push({ cat:'ranking', label:`${emoji} ${COUNTRY_FLAGS[team]||''}${team}`, pts });
-  });
-
-  // ── Категорія 2: Топ гонщик команди — 1 пункт за кожного вгаданого ──
-  const topRiders = results.topRiders || {};  // { 'Poland': 'ZMARZLIK', 'Germany': 'HUCKENBECK', ... }
-  const pickedTopRiders = picks.topRiders || {};
-  Object.entries(pickedTopRiders).forEach(([team, rider]) => {
-    const correct = topRiders[team];
-    const pts = (correct && rider === correct) ? 1 : 0;
-    score += pts; breakdown.topRiders += pts;
-    details.push({ cat:'topRider', label:`🏆 ${COUNTRY_FLAGS[team]||''}${team}: ${rider}`, pts });
-  });
-
-  // ── Категорія 3: Команда-невдаха — 1 пункт за вгадану ──
-  const loserTeam = results.loserTeam || null;
-  const pickedLoser = picks.loserTeam || null;
-  if (pickedLoser !== null && pickedLoser !== undefined) {
-    const pts = pickedLoser === loserTeam ? 1 : 0;
-    score += pts; breakdown.loser += pts;
-    details.push({ cat:'loser', label:`💀 ${COUNTRY_FLAGS[pickedLoser]||''}${pickedLoser}`, pts });
-  }
-
-  return { score, breakdown, details };
-}
-
 async function swcRenderAllPredictions() {
   const list=document.getElementById('swcAllPredsList'), countEl=document.getElementById('swcAllCount');
   if(!list)return;
@@ -1409,7 +2166,6 @@ async function swcRenderAllPredictions() {
     return `<div class="all-pred-card" style="${isMe?'border-color:rgba(10,132,255,.3);':''}"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</span><span class="all-pred-time">${time}</span></div><div class="all-pred-chips">${rankChips}${riderChips}${loserChip}</div></div>`;
   }).join('');
 }
-
 function swcRenderOfficialResults() {
   const R=SWC_ACTIVE_ROUND.results, grid=document.getElementById('swcResultsGrid'), noR=document.getElementById('swcNoResults');
   if(!grid)return;
@@ -1423,7 +2179,6 @@ function swcRenderOfficialResults() {
   const loserCard=R.loserTeam?`<div style="background:var(--surface);border:1px solid rgba(255,59,48,.3);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px">💀 невдаха</div><div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--red)">${COUNTRY_FLAGS[R.loserTeam]||''} ${R.loserTeam}</div></div>`:'';
   grid.innerHTML=rankCards+riderCards+loserCard;
 }
-
 async function swcRenderLeaderboard() {
   const R=SWC_ACTIVE_ROUND.results, list=document.getElementById('swcLeaderboardList'), countEl=document.getElementById('swcLbCount');
   if(!list)return;
@@ -1444,9 +2199,6 @@ async function swcRenderLeaderboard() {
     return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score" style="color:#60b5ff">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;
   }).join('');
 }
-
-function showSwcTab(id){['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});document.querySelectorAll('#swcScreen .nav-tabs .nav-tab').forEach(btn=>{const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];btn.classList.toggle('active',t===id);});if(id==='swcTabAll')swcRenderAllPredictions();if(id==='swcTabResults'){swcRenderOfficialResults();swcRenderLeaderboard();}if(id==='swcTabSeason')swcRenderSeasonStandings();}
-
 async function swcRenderSeasonStandings() {
   const list=document.getElementById('swcSeasonList'), countEl=document.getElementById('swcSeasonCount');
   if(!list)return;
@@ -1474,23 +2226,75 @@ async function swcRenderSeasonStandings() {
   }).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  BOOT — handled by auth.onAuthStateChanged
-// ═══════════════════════════════════════════════════════════════
-setInterval(()=>{ localStorage.removeItem('sgp_race_checked_'+ACTIVE_ROUND.id); checkRaceStatus(); },3*60*1000);
-function swcValidatePrediction(picks) {
-  const n = (SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;
-  // Check ranking
-  for(let i=1;i<=n;i++) if(!picks.teams?.[`rank${i}`]) return `Оберіть команду для ${i}-го місця.`;
-  if(new Set(Object.values(picks.teams)).size !== n) return 'Кожна команда — тільки на одному місці.';
-  // Check top riders
-  const teams = SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[];
-  for(const t of teams) if(!picks.topRiders?.[t]) return `Оберіть топ гонщика для команди ${t}.`;
-  // Check loser
-  if(!picks.loserTeam) return 'Оберіть команду-невдаху.';
-  return null;
+// ═══════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════
+function showTab(id) {
+  ['tabMyPred','tabAllPreds','tabResults','tabSeason'].forEach(t=>{
+    const el=document.getElementById(t); if(el)el.style.display=t===id?'':'none';
+  });
+  document.querySelectorAll('#screenMain > .nav-tabs .nav-tab').forEach(btn=>{
+    const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    btn.classList.toggle('active',t===id);
+  });
+  if(id==='tabAllPreds') renderAllPredictions();
+  if(id==='tabResults')  { renderOfficialResults(); renderLeaderboard(); }
+  if(id==='tabSeason')   renderSeasonStandings();
+}
+function showSwcTab(id) {
+  ['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'].forEach(t=>{
+    const el=document.getElementById(t); if(el)el.style.display=t===id?'':'none';
+  });
+  document.querySelectorAll('#swcScreen .nav-tabs .nav-tab').forEach(btn=>{
+    const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    btn.classList.toggle('active',t===id);
+  });
+  if(id==='swcTabAll')     swcRenderAllPredictions();
+  if(id==='swcTabResults') { swcRenderOfficialResults(); swcRenderLeaderboard(); }
+  if(id==='swcTabSeason')  swcRenderSeasonStandings();
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
+// ═══════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════
+function showMsg(el,msg){el.textContent=msg;el.style.display='';}
+function escHtml(str){return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function showLoading(id,txt){const b=document.getElementById(id);if(b){b.disabled=true;b.textContent=txt;}}
+function hideLoading(id,txt){const b=document.getElementById(id);if(b){b.disabled=false;b.textContent=txt;}}
+
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════
+//  FIRESTORE SECURITY RULES reminder
+// (applied manually in Firebase Console)
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{db}/documents {
+//     match /users/{uid} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth.uid == uid;
+//     }
+//     match /sgp_preds/{roundId}/entries/{uid} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth.uid == uid;
+//     }
+//     match /swc_preds/{roundId}/entries/{uid} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth.uid == uid;
+//     }
+//   }
+// }
+// ═══════════════════════════════════════════
 </script>
 </body>
 </html>
