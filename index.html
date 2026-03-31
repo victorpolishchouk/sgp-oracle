@@ -2247,7 +2247,7 @@ function showScreen(id) {
 // ═══════════════════════════════════════════
 //  UTILS
 // ═══════════════════════════════════════════
-function showMsg(el,msg){el.textContent=msg;el.style.display='';}
+function showMsg(el,msg){el.textContent=msg;el.style.display='block';}
 function escHtml(str){return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function showLoading(id,txt){const b=document.getElementById(id);if(b){b.disabled=true;b.textContent=txt;}}
 function hideLoading(id,txt){const b=document.getElementById(id);if(b){b.disabled=false;b.textContent=txt;}}
