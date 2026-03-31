@@ -851,7 +851,7 @@
             <label>Пароль</label>
             <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
           </div>
-          <button class="btn btn-primary" onclick="doLogin()">УВІЙТИ</button>
+          <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">УВІЙТИ</button>
         </div>
 
         <div id="tabRegister" style="display:none">
@@ -873,7 +873,7 @@
             <label>Повторіть пароль</label>
             <input type="password" id="regPass2" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" />
           </div>
-          <button class="btn btn-primary" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
+          <button class="btn btn-primary" id="registerBtn" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
         </div>
       </div>
     </div>
@@ -1453,15 +1453,25 @@ async function doRegister() {
   if (pass !== pass2)                { showMsg(errEl,'Паролі не співпадають.'); return; }
   showLoading('registerBtn', 'РЕЄСТРАЦІЯ...');
   try {
-    // Check nickname uniqueness
-    const nickSnap = await db.collection('users').where('nickname','==',nick).limit(1).get();
-    if (!nickSnap.empty) { hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ'); showMsg(errEl,'Нікнейм вже зайнятий.'); return; }
+    // 1. Створюємо Firebase Auth акаунт (після цього користувач авторизований)
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    // 2. Перевіряємо унікальність нікнейму (тепер запит проходить Rules)
+    const nickSnap = await db.collection('users').where('nickname','==',nick).limit(1).get();
+    if (!nickSnap.empty) {
+      // Нік зайнятий — видаляємо щойно створений акаунт і показуємо помилку
+      await cred.user.delete();
+      await auth.signOut();
+      hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ');
+      showMsg(errEl,'Нікнейм вже зайнятий.');
+      return;
+    }
+    // 3. Зберігаємо профіль
     await dbSaveUser(cred.user.uid, { nickname: nick, email, createdAt: new Date().toISOString() });
     // onAuthStateChanged handles the rest
   } catch(e) {
     hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ');
     const msg = e.code === 'auth/email-already-in-use' ? 'Email вже зареєстровано.'
+              : e.code === 'auth/weak-password'         ? 'Пароль занадто простий.'
               : e.message;
     showMsg(errEl, msg);
   }
