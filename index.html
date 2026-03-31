@@ -1428,7 +1428,8 @@ async function doLogin() {
   showLoading('loginBtn', 'ВХІД...');
   try {
     await auth.signInWithEmailAndPassword(email, pass);
-    // onAuthStateChanged handles the rest
+    hideLoading('loginBtn', 'УВІЙТИ');
+    // onAuthStateChanged: перехід у додаток, повторне hideLoading для стабільності
   } catch(e) {
     hideLoading('loginBtn', 'УВІЙТИ');
     const msg = e.code === 'auth/invalid-credential' ? 'Невірний email або пароль.'
@@ -1467,6 +1468,7 @@ async function doRegister() {
     }
     // 3. Зберігаємо профіль
     await dbSaveUser(cred.user.uid, { nickname: nick, email, createdAt: new Date().toISOString() });
+    hideLoading('registerBtn', 'ЗАРЕЄСТРУВАТИСЬ');
     // onAuthStateChanged handles the rest
   } catch(e) {
     hideLoading('registerBtn','ЗАРЕЄСТРУВАТИСЬ');
@@ -1489,13 +1491,23 @@ function logout() {
 // ─── Auth state listener ──────────────────
 auth.onAuthStateChanged(async (fbUser) => {
   if (fbUser) {
-    const userData = await dbGetUser(fbUser.uid);
+    let userData = await dbGetUser(fbUser.uid);
+    // Профіль може ще записуватися після createUser (onAuthStateChanged часто раніше за dbSaveUser)
     if (!userData) {
-      // Registered but profile not yet saved (edge case)
+      for (let i = 0; i < 15 && !userData; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+        userData = await dbGetUser(fbUser.uid);
+      }
+    }
+    if (!userData) {
       await auth.signOut();
+      hideLoading('loginBtn', 'УВІЙТИ');
+      hideLoading('registerBtn', 'ЗАРЕЄСТРУВАТИСЬ');
       showScreen('screenAuth');
       return;
     }
+    hideLoading('loginBtn', 'УВІЙТИ');
+    hideLoading('registerBtn', 'ЗАРЕЄСТРУВАТИСЬ');
     currentUser = { uid: fbUser.uid, email: fbUser.email, nickname: userData.nickname };
     document.getElementById('userPill').style.display = 'flex';
     document.getElementById('userEmail').textContent  = userData.nickname + ' (' + fbUser.email + ')';
@@ -1503,6 +1515,8 @@ auth.onAuthStateChanged(async (fbUser) => {
     await enterApp();
   } else {
     currentUser = null;
+    hideLoading('loginBtn', 'УВІЙТИ');
+    hideLoading('registerBtn', 'ЗАРЕЄСТРУВАТИСЬ');
     showScreen('screenAuth');
   }
 });
