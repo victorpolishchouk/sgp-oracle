@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Оракул — SGP / SWC Прогнози</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🏁</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
@@ -775,33 +776,6 @@
       padding: 4px 10px;
     }
 
-    /* ──────── LEADERBOARD ──────── */
-    .lb-row {
-      display: grid;
-      grid-template-columns: 36px 1fr auto;
-      align-items: center;
-      gap: 12px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      transition: border-color .2s;
-    }
-    .lb-row:hover { border-color: #3a3a44; }
-    .lb-row.me { border-color: rgba(212,240,0,.3); background: rgba(212,240,0,.03); }
-    .lb-row.rank-1 { border-color: rgba(212,240,0,.5); }
-    .lb-row.rank-2 { border-color: rgba(200,200,200,.3); }
-    .lb-row.rank-3 { border-color: rgba(180,120,60,.3); }
-    .lb-rank { font-family: var(--font-head); font-size: 20px; font-weight: 900; text-align: center; line-height: 1; }
-    .lb-info { min-width: 0; }
-    .lb-nick { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-    .lb-breakdown { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-    .lb-chip { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); }
-    .lb-chip.has-pts { color: var(--green); border-color: rgba(48,209,88,.25); background: rgba(48,209,88,.07); }
-    .lb-score { font-family: var(--font-head); font-size: 32px; font-weight: 900; color: var(--accent); text-align: right; line-height: 1; white-space: nowrap; }
-    .lb-score-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: right; }
-
     /* ──────── FOOTER ──────── */
     footer {
       margin-top: 40px;
@@ -849,7 +823,7 @@
     <span class="race-banner-icon"><span class="spinner"></span></span>
     <div class="race-banner-text">
       <strong>Перевірка статусу гонки...</strong>
-      <span>Запит до <a href="https://fimspeedway.com/sgp/calendar" target="_blank">fimspeedway.com</a></span>
+      <span>Визначення часу до старту · <a href="https://fimspeedway.com/sgp/calendar" target="_blank">fimspeedway.com</a></span>
     </div>
   </div>
 
@@ -875,7 +849,7 @@
           </div>
           <div class="field">
             <label>Пароль</label>
-            <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+            <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
           </div>
           <button class="btn btn-primary" onclick="doLogin()">УВІЙТИ</button>
         </div>
@@ -893,11 +867,11 @@
           </div>
           <div class="field">
             <label>Пароль</label>
-            <input type="password" id="regPass" placeholder="мін. 6 символів" />
+            <input type="password" id="regPass" placeholder="мін. 6 символів" autocomplete="new-password" />
           </div>
           <div class="field">
             <label>Повторіть пароль</label>
-            <input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()" />
+            <input type="password" id="regPass2" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" />
           </div>
           <button class="btn btn-primary" onclick="doRegister()">ЗАРЕЄСТРУВАТИСЬ</button>
         </div>
@@ -1336,9 +1310,9 @@ const SWC_TEAMS = {
   'Great Britain': { riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK'] },
   'Germany':       { riders:['HUCKENBECK','KVECH','ERNST','REISSIG'] },
   'Czech Republic':{ riders:['VACULIK','MILIK','CHLUPAC','HAJEK'] },
-  'Ukraine':       { riders:['LEBEDEVS','OSTERGAARD','PARNICKI','TROFIMOV'] },
-  'Latvia':        { riders:['LEBEDEVS','PAVLOVS','LAHNO','HNIDENKO'] },
-  'Denmark':       { riders:['MICHELSEN','LINDGREN','JEPSEN','PEDERSEN'] },
+  'Ukraine':       { riders:['TROFIMOV','OSTERGAARD','PARNICKI','HNIDENKO'] },
+  'Latvia':        { riders:['LEBEDEVS','PAVLOVS','LAHNO','KVECH'] },
+  'Denmark':       { riders:['MICHELSEN','JEPSEN','PEDERSEN','IVERSEN'] },
   'Norway':        { riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN'] },
   'Sweden':        { riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON'] },
 };
@@ -1781,13 +1755,13 @@ async function loadUserPrediction() {
 }
 function renderSavedGrid(p) {
   const grid = document.getElementById('savedGrid');
-  [{lbl:'🏆 Фіналіст 1',val:p.top2_1,cls:'accent'},{lbl:'🏆 Фіналіст 2',val:p.top2_2,cls:'accent'},
+  grid.innerHTML = [{lbl:'🏆 Фіналіст 1',val:p.top2_1,cls:'accent'},{lbl:'🏆 Фіналіст 2',val:p.top2_2,cls:'accent'},
    {lbl:'Топ 8·3',val:p.top8_1},{lbl:'Топ 8·4',val:p.top8_2},{lbl:'Топ 8·5',val:p.top8_3},
    {lbl:'Топ 8·6',val:p.top8_4},{lbl:'Топ 8·7',val:p.top8_5},{lbl:'Топ 8·8',val:p.top8_6},
    {lbl:'💀 Невдача',val:p.loser,cls:'red'},
    {lbl:'🥇 Подіум 1',val:p.podium1,cls:'accent'},{lbl:'🥈 Подіум 2',val:p.podium2},{lbl:'🥉 Подіум 3',val:p.podium3},
    {lbl:'🎯 Переможець',val:p.winner,cls:'accent'},
-  ].reduce((html,i) => html + `<div class="saved-item"><div class="saved-item-lbl">${i.lbl}</div><div class="saved-item-val ${i.cls||''}">${i.val||'—'}</div></div>`, '', grid.innerHTML = '', grid.innerHTML);
+  ].map(i=>`<div class="saved-item"><div class="saved-item-lbl">${i.lbl}</div><div class="saved-item-val ${i.cls||''}">${i.val||'—'}</div></div>`).join('');
 }
 
 // ═══════════════════════════════════════════
@@ -1885,7 +1859,7 @@ async function renderSeasonStandings() {
   const userMap = {};
   completed.forEach(round => {
     (allPreds[round.id]||[]).forEach(p => {
-      if (!userMap[p.uid]) userMap[p.uid] = { nickname:p.nickname, rounds:{}, total:0, roundCount:0 };
+      if (!userMap[p.uid]) userMap[p.uid] = { uid:p.uid, nickname:p.nickname, rounds:{}, total:0, roundCount:0 };
       const {score} = calcScore(p, round.results);
       userMap[p.uid].rounds[round.id] = score;
       userMap[p.uid].total += score;
@@ -1899,7 +1873,7 @@ async function renderSeasonStandings() {
   list.innerHTML = users.map(u => {
     display++;
     if (u.total!==prev) { rank=display; prev=u.total; }
-    const isMe = currentUser && currentUser.nickname === u.nickname;
+    const isMe = currentUser && currentUser.uid === u.uid;
     const rankColor = rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
     const cells = completed.map(r=>`<div style="text-align:center;min-width:36px">
       <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${r.city.split(',')[0].substring(0,6)}</div>
@@ -2098,22 +2072,22 @@ async function swcLoadUserPrediction() {
     swcRenderSavedGrid(mine);
     // Restore ranking
     const rankSels=Array.from(document.querySelectorAll('.swc-team-select'));
-    rankSels.forEach((sel,i)=>{ if(mine.teams?.[`rank${i+1}`]) sel.value=mine.teams[`rank${i+1}`]; });
+    rankSels.forEach((sel,i)=>{ if(mine.picks?.teams?.[`rank${i+1}`]) sel.value=mine.picks.teams[`rank${i+1}`]; });
     swcOnTeamSelect();
     // Restore top riders
     const teams=SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[];
     teams.forEach(t=>{
       const el=document.getElementById('swcTopRider_'+t.replace(/\s/g,'_'));
-      if(el&&mine.topRiders?.[t]) el.value=mine.topRiders[t];
+      if(el&&mine.picks?.topRiders?.[t]) el.value=mine.picks.topRiders[t];
     });
     // Restore loser
     const loserEl=document.getElementById('swcLoserTeam');
-    if(loserEl&&mine.loserTeam) loserEl.value=mine.loserTeam;
+    if(loserEl&&mine.picks?.loserTeam) loserEl.value=mine.picks.loserTeam;
     swcUpdatePreview();
     document.getElementById('swcBtnSave').textContent='💾 ОНОВИТИ';
     document.getElementById('swcSubmitTitle').textContent='Оновити прогноз';
     if(swcRaceLocked&&SWC_ACTIVE_ROUND.results&&scoreCard){
-      const result=swcCalcScore(mine,SWC_ACTIVE_ROUND.results);
+      const result=swcCalcScore(mine.picks||mine,SWC_ACTIVE_ROUND.results);
       scoreCard.style.display='';
       document.getElementById('swcMyScoreNum').textContent=result.score;
       const bd=result.breakdown;
@@ -2138,14 +2112,15 @@ async function swcLoadUserPrediction() {
 }
 function swcRenderSavedGrid(mine) {
   const grid=document.getElementById('swcSavedGrid'); if(!grid)return;
+  const picks=mine.picks||mine;
   const emoji=['🥇','🥈','🥉','4️⃣'];
-  const rankItems = Object.entries(mine.teams||{})
+  const rankItems = Object.entries(picks.teams||{})
     .sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4)))
     .map(([,team],i)=>`<div class="saved-item"><div class="saved-item-lbl">${emoji[i]||i+1} місце</div><div class="saved-item-val" style="color:#60b5ff">${COUNTRY_FLAGS[team]||'🏴'} ${team||'—'}</div></div>`);
-  const riderItems = Object.entries(mine.topRiders||{})
+  const riderItems = Object.entries(picks.topRiders||{})
     .map(([team,rider])=>`<div class="saved-item"><div class="saved-item-lbl">🏆 ${COUNTRY_FLAGS[team]||''}${team}</div><div class="saved-item-val" style="color:var(--accent)">${escHtml(rider||'—')}</div></div>`);
-  const loserItem = mine.loserTeam
-    ? `<div class="saved-item"><div class="saved-item-lbl">💀 Невдаха</div><div class="saved-item-val" style="color:var(--red)">${COUNTRY_FLAGS[mine.loserTeam]||'🏴'} ${mine.loserTeam}</div></div>`
+  const loserItem = picks.loserTeam
+    ? `<div class="saved-item"><div class="saved-item-lbl">💀 Невдаха</div><div class="saved-item-val" style="color:var(--red)">${COUNTRY_FLAGS[picks.loserTeam]||'🏴'} ${picks.loserTeam}</div></div>`
     : '';
   grid.innerHTML = rankItems.join('') + riderItems.join('') + loserItem;
 }
@@ -2160,9 +2135,10 @@ async function swcRenderAllPredictions() {
   list.innerHTML=entries.map(p=>{
     const isMe=currentUser&&p.uid===currentUser.uid;
     const time=new Date(p.savedAt).toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    const rankChips=Object.entries(p.teams||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<span class="chip swc-team">${['🥇','🥈','🥉','4️⃣'][i]||''} ${COUNTRY_FLAGS[team]||''}${escHtml(team)}</span>`).join('');
-    const riderChips=Object.entries(p.topRiders||{}).map(([,rider])=>`<span class="chip top2">🏆 ${escHtml(rider)}</span>`).join('');
-    const loserChip=p.loserTeam?`<span class="chip loser">💀 ${COUNTRY_FLAGS[p.loserTeam]||''}${escHtml(p.loserTeam)}</span>`:'';
+    const picks=p.picks||p;
+    const rankChips=Object.entries(picks.teams||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<span class="chip swc-team">${['🥇','🥈','🥉','4️⃣'][i]||''} ${COUNTRY_FLAGS[team]||''}${escHtml(team)}</span>`).join('');
+    const riderChips=Object.entries(picks.topRiders||{}).map(([,rider])=>`<span class="chip top2">🏆 ${escHtml(rider)}</span>`).join('');
+    const loserChip=picks.loserTeam?`<span class="chip loser">💀 ${COUNTRY_FLAGS[picks.loserTeam]||''}${escHtml(picks.loserTeam)}</span>`:'';
     return `<div class="all-pred-card" style="${isMe?'border-color:rgba(10,132,255,.3);':''}"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</span><span class="all-pred-time">${time}</span></div><div class="all-pred-chips">${rankChips}${riderChips}${loserChip}</div></div>`;
   }).join('');
 }
@@ -2185,7 +2161,7 @@ async function swcRenderLeaderboard() {
   const entries=await dbGetAllPreds('swc_preds',SWC_ACTIVE_ROUND.id);
   if(countEl)countEl.textContent=entries.length+' учасників';
   if(!entries.length||!R){list.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">${!R?'Результати ще не опубліковано':'Прогнозів немає'}</div>`;return;}
-  const scored=entries.map(p=>({...p,...swcCalcScore(p,R)})).sort((a,b)=>b.score-a.score);
+  const scored=entries.map(p=>({...p,...swcCalcScore(p.picks||p,R)})).sort((a,b)=>b.score-a.score);
   const emoji=['🥇','🥈','🥉'];
   let prev=null,rank=0,display=0;
   list.innerHTML=scored.map(p=>{
@@ -2209,8 +2185,8 @@ async function swcRenderSeasonStandings() {
   const allPreds=await dbGetSeasonPreds('swc_preds',completed.map(r=>r.id));
   const userMap={};
   completed.forEach(round=>{(allPreds[round.id]||[]).forEach(p=>{
-    if(!userMap[p.uid])userMap[p.uid]={nickname:p.nickname,rounds:{},total:0,roundCount:0};
-    const {score}=swcCalcScore(p,round.results);
+    if(!userMap[p.uid])userMap[p.uid]={uid:p.uid,nickname:p.nickname,rounds:{},total:0,roundCount:0};
+    const {score}=swcCalcScore(p.picks||p,round.results);
     userMap[p.uid].rounds[round.id]=score; userMap[p.uid].total+=score; userMap[p.uid].roundCount++;
   });});
   const users=Object.values(userMap).sort((a,b)=>b.total-a.total);
@@ -2219,7 +2195,7 @@ async function swcRenderSeasonStandings() {
   let prev=null,rank=0,display=0;
   list.innerHTML=users.map(u=>{
     display++;if(u.total!==prev){rank=display;prev=u.total;}
-    const isMe=currentUser&&currentUser.nickname===u.nickname;
+    const isMe=currentUser&&currentUser.uid===u.uid;
     const rankColor=rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
     const cells=completed.map(r=>`<div style="text-align:center;min-width:40px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${r.name.replace('Semi-Final ','SF').replace('Final','F')}</div><div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${u.rounds[r.id]!==undefined?'var(--text)':'var(--muted)'}">${u.rounds[r.id]!==undefined?u.rounds[r.id]:'—'}</div></div>`).join('');
     return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}" style="flex-wrap:wrap;gap:8px"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info" style="flex:1;min-width:120px"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div><div style="text-align:right"><div class="lb-score" style="color:#60b5ff">${u.total}</div><div class="lb-score-lbl">${u.roundCount} р.</div></div></div>`;
