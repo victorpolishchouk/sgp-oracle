@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&family=Barlow:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
 
-  <!-- Firebase SDK v10 (compat) -->
+  <!-- Firebase SDK v11 (compat — підключається через CDN без bundler) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -18,7 +18,6 @@
       --bg:#0a0a0b;--surface:#111114;--card:#16161a;--border:#2a2a30;
       --accent:#d4f000;--accent2:#f0c000;--red:#ff3b30;--orange:#ff9500;
       --green:#30d158;--blue:#0a84ff;--muted:#5a5a68;--text:#e8e8f0;--text2:#9898a8;
-      --admin:#9b59b6;--admin-light:rgba(155,89,182,.15);--admin-border:rgba(155,89,182,.4);
       --font-head:'Barlow Condensed',sans-serif;--font-body:'Barlow',sans-serif;
       --font-mono:'JetBrains Mono',monospace;--radius:10px;
     }
@@ -36,7 +35,6 @@
     .comp-btn{font-family:var(--font-head);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border:none;border-radius:100px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
     .comp-btn.active-sgp{background:var(--accent);color:#0a0a0b}
     .comp-btn.active-swc{background:#0a84ff;color:#fff}
-    .comp-btn.active-admin{background:var(--admin);color:#fff}
 
     .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
     .team-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s}
@@ -48,7 +46,6 @@
 
     .user-pill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:6px 14px 6px 10px;font-size:13px;color:var(--text2)}
     .user-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
-    .user-pill .dot.admin{background:var(--admin)}
 
     .race-banner{border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;font-size:13px}
     .race-banner.open{background:rgba(48,209,88,.07);border:1px solid rgba(48,209,88,.25);color:var(--green)}
@@ -62,13 +59,11 @@
     .screen{display:none}
     .screen.active{display:block}
 
-    /* Loading overlay */
     .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
     .loading-overlay.hidden{display:none}
     .loading-logo{font-family:var(--font-head);font-size:52px;font-weight:900;color:var(--accent)}
     .loading-sub{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:2px}
 
-    /* AUTH */
     .auth-wrap{max-width:420px;margin:60px auto 0;text-align:center}
     .auth-icon{font-size:52px;margin-bottom:16px}
     .auth-title{font-family:var(--font-head);font-size:34px;font-weight:900;color:var(--text);margin-bottom:8px}
@@ -91,11 +86,6 @@
     .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none}
     .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
     .btn-ghost:hover{border-color:var(--text2);color:var(--text)}
-    .btn-admin{background:var(--admin);color:#fff}
-    .btn-admin:hover{background:#a66bbe;transform:translateY(-1px)}
-    .btn-admin:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none}
-    .btn-danger{background:var(--red);color:#fff}
-    .btn-danger:hover{background:#ff5547;transform:translateY(-1px)}
 
     .error-msg{background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff8a80;margin-bottom:14px;display:none}
     .success-msg{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:14px;display:none}
@@ -117,6 +107,7 @@
     .rider-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:10px 34px 10px 12px;outline:none;transition:border-color .2s;width:100%;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a68' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
     .rider-select:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
     .rider-select option{background:var(--card)}
+    .rider-select optgroup{background:var(--card);color:var(--muted);font-style:normal;font-size:11px}
     .rider-select:disabled{opacity:.5;cursor:not-allowed}
 
     .top8-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -211,68 +202,60 @@
     footer a{color:var(--text2);text-decoration:none}
     footer a:hover{color:var(--text)}
 
-    /* ═══ ADMIN PANEL STYLES ═══ */
+    /* ═══ ADMIN PANEL ═══ */
+    :root { --admin:#9b59b6; --admin-light:rgba(155,89,182,.12); --admin-border:rgba(155,89,182,.35); }
+    .comp-btn.active-admin{background:var(--admin);color:#fff}
+    .user-pill .dot.admin{background:var(--admin)}
     #screenAdmin{display:none}
     #screenAdmin.active{display:block}
-
     .admin-header-bar{background:var(--admin-light);border:1px solid var(--admin-border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px}
     .admin-crown{font-size:24px}
     .admin-header-info{flex:1}
     .admin-header-title{font-family:var(--font-head);font-size:20px;font-weight:900;color:var(--admin);letter-spacing:1px}
     .admin-header-sub{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:2px}
-
     .admin-nav{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px}
     .admin-nav-btn{flex:1;padding:9px 12px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:var(--font-head);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s}
     .admin-nav-btn.active{background:var(--admin);color:#fff}
-
     .admin-section{display:none}
     .admin-section.active{display:block}
-
     .admin-card{background:var(--card);border:1px solid var(--admin-border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
     .admin-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
     .admin-card-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
     .admin-card-meta{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
-
     .admin-round-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;padding:12px;background:var(--surface);border:1px solid var(--admin-border);border-radius:var(--radius)}
-
-    /* Rider list editor */
     .rider-list-editor{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-    .rider-row{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;transition:border-color .2s}
-    .rider-row:hover{border-color:#3a3a44}
-    .rider-num{font-family:var(--font-mono);font-size:11px;color:var(--muted);width:20px;text-align:right;flex-shrink:0}
+    .rider-row{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+    .rider-num{font-family:var(--font-mono);font-size:11px;color:var(--muted);width:22px;text-align:right;flex-shrink:0}
     .rider-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-body);font-size:14px;min-width:0}
     .rider-input::placeholder{color:var(--muted)}
     .rider-del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;border-radius:4px;flex-shrink:0;transition:color .15s}
     .rider-del-btn:hover{color:var(--red)}
-
     .admin-add-btn{display:flex;align-items:center;gap:8px;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:10px 14px;color:var(--muted);cursor:pointer;font-family:var(--font-body);font-size:13px;width:100%;transition:all .15s;margin-bottom:14px}
     .admin-add-btn:hover{border-color:var(--admin);color:var(--admin)}
-
     .admin-action-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .admin-status-msg{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
     .admin-status-msg.ok{color:var(--green)}
     .admin-status-msg.err{color:var(--red)}
-
-    /* Team editor for SWC */
-    .swc-team-editor{background:var(--card);border:1px solid var(--admin-border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
-    .swc-team-editor-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-    .swc-team-flag{font-size:20px}
-    .swc-team-editor-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
-
-    .admin-info-box{background:rgba(155,89,182,.08);border:1px solid var(--admin-border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.6}
+    .admin-info-box{background:rgba(155,89,182,.07);border:1px solid var(--admin-border);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.6}
     .admin-info-box strong{color:var(--admin)}
-
     .admin-bulk-textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:12px;padding:12px;outline:none;resize:vertical;min-height:120px;transition:border-color .2s}
     .admin-bulk-textarea:focus{border-color:var(--admin)}
-
     .admin-tabs-secondary{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
     .admin-tab-s{font-family:var(--font-mono);font-size:10px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
     .admin-tab-s:hover{border-color:var(--admin);color:var(--admin)}
     .admin-tab-s.active{border-color:var(--admin);background:var(--admin-light);color:var(--admin)}
+    .btn-admin{background:var(--admin);color:#fff;font-family:var(--font-head);font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .btn-admin:hover{background:#a66bbe;transform:translateY(-1px)}
+    .btn-admin:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none}
+    .swc-team-editor{background:var(--card);border:1px solid var(--admin-border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+    .swc-team-editor-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .swc-team-flag{font-size:20px}
+    .swc-team-editor-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
   </style>
 </head>
 <body>
 
+<!-- Loading overlay -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-logo">SGP</div>
   <div class="loading-sub">Підключення...</div>
@@ -335,7 +318,7 @@
     </div>
   </div>
 
-  <!-- MAIN SCREEN (SGP) -->
+  <!-- MAIN SCREEN -->
   <div class="screen" id="screenMain">
     <div class="round-selector" id="roundSelectorWrap"></div>
     <div class="active-round-header">
@@ -547,14 +530,14 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
-       ADMIN SCREEN
+       ADMIN SCREEN — тільки viktor.polishchouk@gmail.com
   ═══════════════════════════════════════════════════════ -->
   <div class="screen" id="screenAdmin">
     <div class="admin-header-bar">
       <span class="admin-crown">👑</span>
       <div class="admin-header-info">
         <div class="admin-header-title">Адміністративна панель</div>
-        <div class="admin-header-sub">Доступ: viktor.polishchouk@gmail.com · Зміни зберігаються у Firestore</div>
+        <div class="admin-header-sub">viktor.polishchouk@gmail.com · Зміни зберігаються у Firestore і одразу застосовуються</div>
       </div>
     </div>
 
@@ -566,8 +549,8 @@
     <!-- SGP RIDERS EDITOR -->
     <div class="admin-section active" id="adminSgp">
       <div class="admin-info-box">
-        <strong>SGP — редагування списку гонщиків</strong><br>
-        Оберіть раунд та відредагуйте список. Зміни застосовуються до форм прогнозів для всіх користувачів. Якщо список для раунду не збережено — використовується дефолтний список.
+        <strong>SGP — список гонщиків</strong><br>
+        Оберіть раунд і відредагуй список. Зберігається у <code>config/sgp_riders</code> і одразу відображається у формах прогнозів. Якщо для раунду немає збереженого списку — використовується дефолтний <code>SGP_ALL_RIDERS</code>.
       </div>
 
       <div id="adminRoundSelector" class="admin-round-selector"></div>
@@ -579,14 +562,14 @@
             <div class="admin-card-meta" id="adminRiderCardMeta"></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12px" onclick="adminCopyFromDefault()">↩ Дефолт</button>
-            <button class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12px" onclick="adminCopyFromPrev()">⬆ З попереднього</button>
+            <button class="btn-ghost" style="padding:8px 14px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminCopyFromDefault()">↩ Дефолт</button>
+            <button class="btn-ghost" style="padding:8px 14px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminCopyFromPrev()">⬆ З попереднього</button>
           </div>
         </div>
 
         <div style="margin-bottom:12px">
-          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:8px">СПИСОК ГОНЩИКІВ (по одному на рядок або через кому)</div>
-          <textarea class="admin-bulk-textarea" id="adminBulkInput" placeholder="ZMARZLIK&#10;LAMBERT&#10;LINDGREN&#10;..." oninput="adminBulkToList()"></textarea>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:8px">СПИСОК (по одному на рядок або через кому)</div>
+          <textarea class="admin-bulk-textarea" id="adminBulkInput" placeholder="ZMARZLIK&#10;KURTZ&#10;BEWLEY&#10;..." oninput="adminBulkToList()"></textarea>
         </div>
 
         <div class="rider-list-editor" id="riderListEditor"></div>
@@ -598,30 +581,30 @@
         <div class="admin-action-row">
           <span class="admin-status-msg" id="adminSgpStatus"></span>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost" style="width:auto;padding:10px 18px;font-size:13px" onclick="adminLoadRiders()">↺ Скасувати</button>
-            <button class="btn btn-admin" style="width:auto;padding:10px 20px;font-size:13px" onclick="adminSaveRiders()">💾 Зберегти</button>
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadRiders()">↺ Скасувати</button>
+            <button class="btn-admin" onclick="adminSaveRiders()">💾 Зберегти</button>
           </div>
         </div>
       </div>
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-top:8px">
-        <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Застосувати список до кількох раундів</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Збережений список поточного раунду буде скопійовано до обраних раундів:</div>
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Застосувати до кількох раундів одночасно</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Поточний відредагований список буде збережено до всіх обраних раундів:</div>
         <div id="adminBatchRoundPicker" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
-        <button class="btn btn-admin" style="width:auto;padding:10px 20px;font-size:13px" onclick="adminBatchSave()">💾 Зберегти до обраних</button>
+        <button class="btn-admin" onclick="adminBatchSave()">💾 Зберегти до обраних</button>
       </div>
     </div>
 
     <!-- SWC TEAMS EDITOR -->
     <div class="admin-section" id="adminSwc">
       <div class="admin-info-box">
-        <strong>SWC — редагування складів команд</strong><br>
-        Оберіть команду та відредагуйте список гонщиків. Зміни зберігаються у Firestore та відображаються у форті прогнозів SWC.
+        <strong>SWC — склади команд</strong><br>
+        Оберіть команду і відредагуй гонщиків. Зберігається у <code>config/swc_teams</code> і відображається у картках команд у формі прогнозів SWC.
       </div>
 
       <div class="admin-tabs-secondary" id="swcTeamTabs"></div>
 
-      <div class="swc-team-editor" id="swcTeamEditorWrap">
+      <div class="swc-team-editor">
         <div class="swc-team-editor-header">
           <span class="swc-team-flag" id="swcAdminTeamFlag">🏴</span>
           <span class="swc-team-editor-name" id="swcAdminTeamName">Оберіть команду</span>
@@ -641,8 +624,8 @@
         <div class="admin-action-row">
           <span class="admin-status-msg" id="adminSwcStatus"></span>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost" style="width:auto;padding:10px 18px;font-size:13px" onclick="adminLoadSwcTeam()">↺ Скасувати</button>
-            <button class="btn btn-admin" style="width:auto;padding:10px 20px;font-size:13px" onclick="adminSaveSwcTeam()">💾 Зберегти</button>
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadSwcTeam()">↺ Скасувати</button>
+            <button class="btn-admin" onclick="adminSaveSwcTeam()">💾 Зберегти</button>
           </div>
         </div>
       </div>
@@ -661,6 +644,8 @@
 // ═══════════════════════════════════════════════════════════════
 //  FIREBASE INIT
 // ═══════════════════════════════════════════════════════════════
+// SEC-001: API Key публічний — обмежено через Google Cloud Console:
+// APIs & Services → Credentials → HTTP referrers: victorpolishchouk.github.io/*
 const firebaseConfig = {
   apiKey:            "AIzaSyDz3LTjBimSnFOjsKWWFV7oJI3q8C2IEFM",
   authDomain:        "sgp-oracle.firebaseapp.com",
@@ -676,32 +661,64 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 // ═══════════════════════════════════════════════════════════════
-//  ADMIN CONFIG
+//  SGP 2026 RIDERS — оновлено з fimspeedway.com/sgp/riders (квітень 2026)
+//  #1–15 : постійні учасники
+//  #16    : Blodorn (основний склад)
+//  #17–18 : Track Reserves — Kevin Wolbert, Valentin Grobauer
 // ═══════════════════════════════════════════════════════════════
-const ADMIN_EMAIL = 'viktor.polishchouk@gmail.com';
-let isAdmin = false;
+const SGP_MAIN_RIDERS = [
+  'ZMARZLIK',       // #1  Bartosz Zmarzlik      🇵🇱
+  'KURTZ',          // #2  Brady Kurtz            🇦🇺
+  'BEWLEY',         // #3  Dan Bewley             🇬🇧
+  'LINDGREN',       // #4  Fredrik Lindgren       🇸🇪
+  'HOLDER',         // #5  Jack Holder            🇦🇺
+  'LEBEDEVS',       // #6  Andzejs Lebedevs       🇱🇻
+  'LAMBERT',        // #7  Robert Lambert         🇬🇧
+  'FRICKE',         // #8  Max Fricke             🇦🇺
+  'DOYLE',          // #9  Jason Doyle            🇦🇺
+  'KUBERA',         // #10 Dominik Kubera         🇵🇱
+  'MADSEN',         // #11 Leon Madsen            🇩🇰
+  'JEPSEN JENSEN',  // #12 Michael Jepsen Jensen  🇩🇰
+  'DUDEK',          // #13 Patryk Dudek           🇵🇱
+  'WORYNA',         // #14 Kacper Woryna          🇵🇱
+  'PARNITSKYI',     // #15 Nazar Parnitskyi       🇺🇦
+  'BLODORN'         // #16 Blodorn               🇩🇪
+];
+const SGP_RESERVE_RIDERS = [
+  'WOLBERT',        // #17 Kevin Wolbert  (Track Reserve) 🇩🇪
+  'GROBAUER'        // #18 Valentin Grobauer (Track Reserve) 🇩🇪
+];
+const SGP_ALL_RIDERS = [...SGP_MAIN_RIDERS, ...SGP_RESERVE_RIDERS];
 
 // ═══════════════════════════════════════════════════════════════
-//  SEASON CONFIG — 2026 (defaults, overridden by Firestore)
+//  SEASON CONFIG — 2026
 // ═══════════════════════════════════════════════════════════════
-const DEFAULT_RIDERS = ['ZMARZLIK','LAMBERT','LINDGREN','BEWLEY','VACULIK','HOLDER','MICHELSEN','KUBERA','LEBEDEVS','FRICKE','HUCKENBECK','KVECH','DOYLE','THOMSEN','KURTZ','JEPSEN'];
-
 const SEASON = {
   year: 2026,
   rounds: [
     { id:'r01', name:'Vojens GP',            city:'Vojens, Denmark',        date:'2026-03-25', startDatetime:'2026-03-25T12:00:00',
-      riders:[...DEFAULT_RIDERS],
+      riders: SGP_ALL_RIDERS,
       results:{ top2:['ZMARZLIK','BEWLEY'], top8:['ZMARZLIK','BEWLEY','MICHELSEN','LAMBERT','HOLDER','LINDGREN','KUBERA','FRICKE'], podium:['ZMARZLIK','BEWLEY','MICHELSEN'], winner:'ZMARZLIK', loser:'KURTZ', loserIncident:true } },
-    { id:'r02', name:'Landshut GP',          city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r03', name:'Prague GP',            city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r04', name:'Manchester GP (R3)',   city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r05', name:'Manchester GP (R4)',   city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r06', name:'Wroclaw GP',           city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r07', name:'Malilla GP',           city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r08', name:'Lodz GP',              city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r09', name:'Riga GP',              city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r10', name:'Vojens GP (R10)',      city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00', riders:[...DEFAULT_RIDERS], results:null },
-    { id:'r11', name:'Torun GP',             city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00', riders:[...DEFAULT_RIDERS], results:null },
+    { id:'r02', name:'Landshut GP',          city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r03', name:'Prague GP',            city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r04', name:'Manchester GP (R3)',   city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r05', name:'Manchester GP (R4)',   city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r06', name:'Wroclaw GP',           city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r07', name:'Malilla GP',           city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r08', name:'Lodz GP',              city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r09', name:'Riga GP',              city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r10', name:'Vojens GP (R10)',      city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
+    { id:'r11', name:'Torun GP',             city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00',
+      riders: SGP_ALL_RIDERS, results:null },
   ]
 };
 
@@ -742,37 +759,6 @@ function getRaceLockCache(rid) {
 function setRaceLockCache(rid,locked) { localStorage.setItem('sgp_lock_'+rid,JSON.stringify({locked,ts:Date.now()})); }
 
 // ═══════════════════════════════════════════════════════════════
-//  FIRESTORE CONFIG LOADER — load custom riders per round
-// ═══════════════════════════════════════════════════════════════
-async function loadRidersConfig() {
-  try {
-    const snap = await db.collection('config').doc('sgp_riders').get();
-    if (snap.exists) {
-      const data = snap.data();
-      SEASON.rounds.forEach(r => {
-        if (data[r.id] && Array.isArray(data[r.id]) && data[r.id].length > 0) {
-          r.riders = data[r.id];
-        }
-      });
-    }
-  } catch(e) { console.warn('loadRidersConfig:', e.message); }
-}
-
-async function loadSwcTeamsConfig() {
-  try {
-    const snap = await db.collection('config').doc('swc_teams').get();
-    if (snap.exists) {
-      const data = snap.data();
-      Object.keys(data).forEach(teamName => {
-        if (SWC_TEAMS[teamName] && Array.isArray(data[teamName])) {
-          SWC_TEAMS[teamName].riders = data[teamName];
-        }
-      });
-    }
-  } catch(e) { console.warn('loadSwcTeamsConfig:', e.message); }
-}
-
-// ═══════════════════════════════════════════════════════════════
 //  FIREBASE AUTH
 // ═══════════════════════════════════════════════════════════════
 function switchTab(tab) {
@@ -786,14 +772,14 @@ async function doLogin() {
   const pass  = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display='none';
-  if(!email||!pass){ showMsg(errEl,'Заповніть email та пароль'); showToast('⚠️ Заповніть email та пароль','error'); return; }
+  if(!email||!pass){showMsg(errEl,'Заповніть email та пароль');showToast('⚠️ Заповніть email та пароль','error');return;}
   const btn=document.getElementById('loginBtn');
   btn.disabled=true; btn.textContent='…';
   try {
     await auth.signInWithEmailAndPassword(email,pass);
     showToast('✓ Вхід успішний!','success');
   } catch(e) {
-    const msgs={'auth/user-not-found':'Email не знайдено.','auth/wrong-password':'Невірний пароль.','auth/invalid-email':'Некоректний email.','auth/invalid-credential':'Невірний email або пароль.','auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.','auth/network-request-failed':'Помилка мережі.'};
+    const msgs={'auth/user-not-found':'Email не знайдено.','auth/wrong-password':'Невірний пароль.','auth/invalid-email':'Некоректний email.','auth/invalid-credential':'Невірний email або пароль.','auth/too-many-requests':'Забагато спроб. Спробуйте пізніше.','auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.'};
     const msg = msgs[e.code] || e.message;
     showMsg(errEl, msg); showToast('❌ ' + msg, 'error');
     btn.disabled=false; btn.textContent='УВІЙТИ';
@@ -808,22 +794,22 @@ async function doRegister() {
   const errEl = document.getElementById('regError');
   const okEl  = document.getElementById('regSuccess');
   errEl.style.display='none'; okEl.style.display='none';
-  if(!nick){ showMsg(errEl,'Введіть нікнейм.'); showToast('⚠️ Введіть нікнейм','error'); return; }
+  if(!nick){showMsg(errEl,'Введіть нікнейм.');showToast('⚠️ Введіть нікнейм','error');return;}
   const nickPattern = /^[a-zA-Z0-9А-ЯҐЄІЇа-яґєіїs\'\-]{2,30}$/;
   const cleanNick = nick.replace(/\s+/g,' ').trim();
-  if(!nickPattern.test(cleanNick)||/<|>|&|"|\/|script/i.test(cleanNick)){ showMsg(errEl,'Нікнейм: 2–30 символів. Тільки літери, цифри, дефіс.'); showToast('⚠️ Некоректний нікнейм','error'); return; }
-  if(!email||!email.includes('@')){ showMsg(errEl,'Некоректний email.'); showToast('⚠️ Некоректний email','error'); return; }
-  if(pass.length<6){ showMsg(errEl,'Пароль мін. 6 символів.'); showToast('⚠️ Пароль мін. 6 символів','error'); return; }
-  if(pass!==pass2){ showMsg(errEl,'Паролі не співпадають.'); showToast('⚠️ Паролі не співпадають','error'); return; }
+  if(!nickPattern.test(cleanNick)||/<|>|&|"|\/|script/i.test(cleanNick)){showMsg(errEl,'Нікнейм: 2–30 символів. Тільки літери, цифри, дефіс. Спецсимволи заборонені.');showToast('⚠️ Некоректний нікнейм','error');return;}
+  if(!email||!email.includes('@')){showMsg(errEl,'Некоректний email.');showToast('⚠️ Некоректний email','error');return;}
+  if(pass.length<6){showMsg(errEl,'Пароль мін. 6 символів.');showToast('⚠️ Пароль мін. 6 символів','error');return;}
+  if(pass!==pass2){showMsg(errEl,'Паролі не співпадають.');showToast('⚠️ Паролі не співпадають','error');return;}
   const btn=document.getElementById('regBtn');
   btn.disabled=true; btn.textContent='…';
   try {
     const cred = await auth.createUserWithEmailAndPassword(email,pass);
-    await db.collection('users').doc(cred.user.uid).set({ nickname:nick, email, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+    await db.collection('users').doc(cred.user.uid).set({nickname:nick,email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     showMsg(okEl,`Ласкаво просимо, ${nick}!`);
     showToast(`✓ Ласкаво просимо, ${nick}!`,'success');
   } catch(e) {
-    const msgs={'auth/email-already-in-use':'Email вже зареєстровано.','auth/weak-password':'Пароль занадто простий.','auth/invalid-email':'Некоректний email.','auth/network-request-failed':'Помилка мережі.'};
+    const msgs={'auth/email-already-in-use':'Email вже зареєстровано.','auth/weak-password':'Пароль занадто простий.','auth/invalid-email':'Некоректний email.','auth/network-request-failed':'Помилка мережі. Перевірте з\'єднання.'};
     const msg = msgs[e.code] || e.message;
     showMsg(errEl, msg); showToast('❌ ' + msg,'error');
     btn.disabled=false; btn.textContent='ЗАРЕЄСТРУВАТИСЬ';
@@ -832,10 +818,8 @@ async function doRegister() {
 
 async function logout() {
   await auth.signOut();
-  userNickname=''; isAdmin=false;
+  userNickname='';
   document.getElementById('userPill').style.display='none';
-  document.getElementById('btnAdmin').style.display='none';
-  // BUG1+BUG2: повністю скидаємо форму auth при logout
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPass').value='';
   document.getElementById('loginError').style.display='none';
@@ -859,14 +843,13 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById('loadingOverlay').classList.add('hidden');
   if(user){
     currentUser=user;
-    isAdmin = (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
     try {
       const snap = await db.collection('users').doc(user.uid).get();
       userNickname = snap.exists ? snap.data().nickname : user.email.split('@')[0];
     } catch(e){ userNickname=user.email.split('@')[0]; }
     enterApp();
   } else {
-    currentUser=null; isAdmin=false;
+    currentUser=null;
     const lb=document.getElementById('loginBtn'),rb=document.getElementById('regBtn');
     if(lb){lb.disabled=false;lb.textContent='УВІЙТИ';}
     if(rb){rb.disabled=false;rb.textContent='ЗАРЕЄСТРУВАТИСЬ';}
@@ -929,19 +912,9 @@ function applyLockToForm() {
 // ═══════════════════════════════════════════════════════════════
 //  APP ENTRY
 // ═══════════════════════════════════════════════════════════════
-async function enterApp() {
-  // Load custom configs from Firestore before rendering
-  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig()]);
-
+function enterApp() {
   document.getElementById('userPill').style.display='flex';
   document.getElementById('userNickname').textContent=userNickname;
-
-  // Admin indicator
-  if(isAdmin){
-    document.getElementById('userDot').classList.add('admin');
-    document.getElementById('btnAdmin').style.display='';
-  }
-
   showScreen('screenMain');
   renderRoundSelector();
   updateActiveRoundHeader();
@@ -958,9 +931,6 @@ async function enterApp() {
   renderAllPredictions();
   renderSwcRoundSelector();
   swcRenderTeamForm();
-
-  // Init admin panel if admin
-  if(isAdmin) adminInit();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -984,7 +954,6 @@ function updateActiveRoundHeader() {
 function switchRound(id) {
   ACTIVE_ROUND=SEASON.rounds.find(r=>r.id===id);
   renderRoundSelector(); updateActiveRoundHeader();
-  // BUG6: скидаємо стан форми перед populateSelects
   document.querySelectorAll('.rider-select').forEach(s=>s.disabled=false);
   const btnSave=document.getElementById('btnSave'),btnClear=document.getElementById('btnClear');
   if(btnSave){btnSave.disabled=false;btnSave.textContent='💾 ЗБЕРЕГТИ';}
@@ -998,7 +967,7 @@ function switchRound(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SELECTS
+//  SELECTS — з optgroup для резервів
 // ═══════════════════════════════════════════════════════════════
 const EX_GROUPS=[['top2_1','top2_2'],['top8_1','top8_2','top8_3','top8_4','top8_5','top8_6'],['podium1','podium2','podium3']];
 
@@ -1012,11 +981,27 @@ function rebuildGroupOptions(g) {
   });
 }
 
+function buildRiderOptions(riders) {
+  // Split into main (first 16) and reserves (17-18)
+  const main = riders.filter(r => SGP_MAIN_RIDERS.includes(r));
+  const reserves = riders.filter(r => SGP_RESERVE_RIDERS.includes(r));
+  let html = '<option value="">— оберіть —</option>';
+  html += '<optgroup label="── Основний склад (1–16) ──">';
+  main.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+  html += '</optgroup>';
+  if(reserves.length) {
+    html += '<optgroup label="── Track Reserves (17–18) ──">';
+    reserves.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+    html += '</optgroup>';
+  }
+  return html;
+}
+
 function populateSelects() {
   const riders=ACTIVE_ROUND.riders;
   ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
-    el.innerHTML='<option value="">— оберіть —</option>'+riders.map(r=>`<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+    el.innerHTML=buildRiderOptions(riders);
   });
   EX_GROUPS.forEach(g=>g.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>{rebuildGroupOptions(g);updatePreview();});}));
   ['loser','winner'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',updatePreview);});
@@ -1037,10 +1022,13 @@ async function savePrediction() {
   btn.disabled=true; btn.textContent='Збереження…';
   try {
     const ref=db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').doc(currentUser.uid);
-    await ref.set({ ...d, nickname:userNickname, email:currentUser.email, uid:currentUser.uid, savedAt:firebase.firestore.FieldValue.serverTimestamp(), roundId:ACTIVE_ROUND.id });
+    await ref.set({...d,nickname:userNickname,email:currentUser.email,uid:currentUser.uid,savedAt:firebase.firestore.FieldValue.serverTimestamp(),roundId:ACTIVE_ROUND.id});
     showToast('✓ Прогноз збережено у Firebase!','success');
-    loadUserPrediction(); renderAllPredictions();
-  } catch(e){ showToast('Помилка збереження: '+e.message,'error'); }
+    loadUserPrediction();
+    renderAllPredictions();
+  } catch(e){
+    showToast('Помилка збереження: '+e.message,'error');
+  }
   btn.disabled=false; btn.textContent='💾 ОНОВИТИ';
 }
 
@@ -1062,7 +1050,7 @@ async function loadUserPrediction() {
       });
       EX_GROUPS.forEach(g=>rebuildGroupOptions(g));
       updatePreview();
-      if(!raceLocked){ const s=document.getElementById('btnSave'); if(s)s.textContent='💾 ОНОВИТИ'; document.getElementById('submitZoneTitle').textContent='Оновити прогноз'; }
+      if(!raceLocked){const s=document.getElementById('btnSave');if(s)s.textContent='💾 ОНОВИТИ';document.getElementById('submitZoneTitle').textContent='Оновити прогноз';}
       if(raceLocked&&ACTIVE_ROUND.results){
         const res=calcScore(mine,ACTIVE_ROUND.results);
         if(scoreCard){
@@ -1236,10 +1224,7 @@ function showTab(id) {
   if(id==='tabSeason')renderSeasonStandings();
 }
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function showMsg(el,msg){el.textContent=msg;el.style.display='';}
 function escHtml(str){return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
@@ -1250,8 +1235,7 @@ function showToast(msg,type=''){const t=document.getElementById('toast');t.textC
 //  SWC CONFIG — 2026
 // ═══════════════════════════════════════════════════════════════
 const COUNTRY_FLAGS={'Poland':'🇵🇱','Australia':'🇦🇺','Great Britain':'🇬🇧','Germany':'🇩🇪','Czech Republic':'🇨🇿','Ukraine':'🇺🇦','Latvia':'🇱🇻','Denmark':'🇩🇰','Norway':'🇳🇴','Sweden':'🇸🇪'};
-const SWC_TEAMS={'Poland':{riders:['ZMARZLIK','KUBERA','DUDEK','JANOWSKI','KOLODZIEJ']},'Australia':{riders:['HOLDER','FRICKE','DOYLE','LAMBERT']},'Great Britain':{riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK']},'Germany':{riders:['HUCKENBECK','KVECH','ERNST','REISSIG']},'Czech Republic':{riders:['VACULIK','MILIK','CHLUPAC','HAJEK']},'Ukraine':{riders:['PARNICKI','OSTERGAARD','TROFIMOV','HNIDENKO']},'Latvia':{riders:['LEBEDEVS','PAVLOVS','LAHNO','HNIDENKO']},'Denmark':{riders:['MICHELSEN','LINDGREN','JEPSEN','PEDERSEN']},'Norway':{riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN']},'Sweden':{riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON']}};
-
+const SWC_TEAMS={'Poland':{riders:['ZMARZLIK','KUBERA','DUDEK','WORYNA','KOLODZIEJ']},'Australia':{riders:['HOLDER','FRICKE','DOYLE','LAMBERT']},'Great Britain':{riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK']},'Germany':{riders:['BLODORN','WOLBERT','GROBAUER','ERNST']},'Czech Republic':{riders:['VACULIK','MILIK','CHLUPAC','HAJEK']},'Ukraine':{riders:['PARNITSKYI','TROFIMOV','HNIDENKO','OSTERGAARD']},'Latvia':{riders:['LEBEDEVS','PAVLOVS','LAHNO']},'Denmark':{riders:['MADSEN','JEPSEN JENSEN','PEDERSEN','MICHELSEN']},'Norway':{riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN']},'Sweden':{riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON']}};
 const SWC_SEASON={year:2026,rounds:[
   {id:'swc_sf1',name:'Semi-Final 1',city:'Landshut, Germany',date:'2026-05-01',startDatetime:'2026-05-01T18:00:00',format:'semi-final',teams:['Germany','Czech Republic','Great Britain','Ukraine'],qualifiers:1,results:null},
   {id:'swc_sf2',name:'Semi-Final 2',city:'Riga, Latvia',date:'2026-08-07',startDatetime:'2026-08-07T18:00:00',format:'semi-final',teams:['Latvia','Denmark','Norway','Sweden'],qualifiers:1,results:null},
@@ -1262,22 +1246,13 @@ let swcRaceLocked=false;
 let currentCompetition='SGP';
 
 function switchCompetition(mode){
-  if(mode==='ADMIN' && !isAdmin){ showToast('⛔ Доступ заборонено','error'); return; }
   currentCompetition=mode;
   document.getElementById('btnSGP').className='comp-btn'+(mode==='SGP'?' active-sgp':'');
   document.getElementById('btnSWC').className='comp-btn'+(mode==='SWC'?' active-swc':'');
-  document.getElementById('btnAdmin').className='comp-btn'+(mode==='ADMIN'?' active-admin':'');
-  document.getElementById('logoText').textContent=mode==='ADMIN'?'SGP':mode;
-  document.getElementById('logoSub').textContent=mode==='SWC'?'Кубок Світу':mode==='ADMIN'?'Адмін':'Оракул';
-
-  if(mode==='ADMIN'){
-    showScreen('screenAdmin');
-    return;
-  }
-
+  document.getElementById('logoText').textContent=mode;
+  document.getElementById('logoSub').textContent=mode==='SWC'?'Кубок Світу':'Оракул';
   const rs=document.getElementById('roundSelectorWrap'),ah=document.querySelector('.active-round-header'),nt=document.querySelector('#screenMain>.nav-tabs');
   const tabs=['tabMyPred','tabAllPreds','tabResults','tabSeason'];
-  showScreen('screenMain');
   if(mode==='SWC'){
     if(rs)rs.style.display='none';if(ah)ah.style.display='none';if(nt)nt.style.display='none';
     tabs.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -1312,8 +1287,12 @@ function swcRenderTeamForm(){
 
 function swcOnTeamSelect(){const sels=Array.from(document.querySelectorAll('.swc-team-select'));sels.forEach(s=>{const o=new Set(sels.filter(x=>x!==s&&x.value).map(x=>x.value));Array.from(s.options).forEach(opt=>{if(!opt.value)return;opt.disabled=o.has(opt.value);});});swcUpdatePreview();}
 function swcUpdatePreview(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),f=sels.filter(s=>s.value).length,t=sels.length;document.getElementById('swcPreviewFilled').textContent=f;document.getElementById('swcPreviewTotal').textContent=t;document.getElementById('swcSubmitDesc').textContent=f===t?'✓ Всі команди розставлено.':'Розставте всі '+t+' команди ('+(t-f)+' залишилось)';}
-// BUG4: swcClearForm визначена
-function swcClearForm(){if(swcRaceLocked)return;document.querySelectorAll('.swc-team-select').forEach(s=>{s.value='';});document.querySelectorAll('.swc-team-select option').forEach(o=>o.disabled=false);swcUpdatePreview();}
+function swcClearForm(){
+  if(swcRaceLocked)return;
+  document.querySelectorAll('.swc-team-select').forEach(s=>{s.value='';});
+  document.querySelectorAll('.swc-team-select option').forEach(o=>o.disabled=false);
+  swcUpdatePreview();
+}
 function swcGetPrediction(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),picks={};sels.forEach((s,i)=>{if(s.value)picks[`rank${i+1}`]=s.value;});return picks;}
 function swcValidate(picks){const n=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця.`;}if(new Set(Object.values(picks)).size!==Object.values(picks).length)return'Кожна команда на одному місці.';return null;}
 
@@ -1371,10 +1350,93 @@ function showSwcTab(id){['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'
 async function swcRenderSeasonStandings(){const list=document.getElementById('swcSeasonList'),ce=document.getElementById('swcSeasonCount');if(!list)return;const comp=SWC_SEASON.rounds.filter(r=>r.results);if(ce)ce.textContent=`${comp.length} / ${SWC_SEASON.rounds.length} раундів`;if(!comp.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результатів ще немає</div>';return;}const um={};for(const r of comp){const s=await db.collection('swc_predictions').doc(r.id).collection('users').get();s.docs.forEach(doc=>{const p=doc.data();if(!um[doc.id])um[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,cnt:0};const{score}=swcCalcScore(p.picks,r.results);um[doc.id].rounds[r.id]=score;um[doc.id].total+=score;um[doc.id].cnt++;});}const users=Object.values(um).sort((a,b)=>b.total-a.total);if(!users.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Немає даних</div>';return;}const em=['🥇','🥈','🥉'];let pt=null,rk=0,di=0;list.innerHTML=users.map(u=>{di++;if(u.total!==pt){rk=di;pt=u.total;}const isMe=currentUser&&u.uid===currentUser.uid,rc=rk===1?'var(--accent)':rk===2?'#c0c0c0':rk===3?'#cd7f32':'var(--muted)';const cells=comp.map(r=>{const sc=u.rounds[r.id];return`<div style="text-align:center;min-width:40px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${escHtml(r.name.replace('Semi-Final ','SF').replace('Final','F'))}</div><div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${sc!==undefined?'var(--text)':'var(--muted)'}">${sc!==undefined?sc:'—'}</div></div>`;}).join('');return`<div class="lb-row ${rk<=3?'rank-'+rk:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rc}">${rk<=3?em[rk-1]:rk+'.'}</div><div class="lb-info" style="flex:1"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div><div style="text-align:right"><div class="lb-score" style="color:#60b5ff">${u.total}</div><div class="lb-score-lbl">${u.cnt} р.</div></div></div>`;}).join('');}
 
 // ═══════════════════════════════════════════════════════════════
-//  ⚙ ADMIN PANEL
+//  BOOT
 // ═══════════════════════════════════════════════════════════════
+setInterval(()=>{ localStorage.removeItem('sgp_race_checked_'+ACTIVE_ROUND.id); checkRaceStatus(); },3*60*1000);
 
-// Admin state
+// ═══════════════════════════════════════════════════════════════
+//  ADMIN CONFIG
+// ═══════════════════════════════════════════════════════════════
+const ADMIN_EMAIL = 'viktor.polishchouk@gmail.com';
+let isAdmin = false;
+
+// Patch: load custom riders/teams from Firestore before rendering
+async function loadRidersConfig() {
+  try {
+    const snap = await db.collection('config').doc('sgp_riders').get();
+    if (snap.exists) {
+      const data = snap.data();
+      SEASON.rounds.forEach(r => {
+        if (data[r.id] && Array.isArray(data[r.id]) && data[r.id].length > 0) {
+          r.riders = data[r.id];
+        }
+      });
+    }
+  } catch(e) { console.warn('loadRidersConfig:', e.message); }
+}
+
+async function loadSwcTeamsConfig() {
+  try {
+    const snap = await db.collection('config').doc('swc_teams').get();
+    if (snap.exists) {
+      const data = snap.data();
+      Object.keys(data).forEach(teamName => {
+        if (SWC_TEAMS[teamName] && Array.isArray(data[teamName]) && data[teamName].length > 0) {
+          SWC_TEAMS[teamName].riders = data[teamName];
+        }
+      });
+    }
+  } catch(e) { console.warn('loadSwcTeamsConfig:', e.message); }
+}
+
+// Patch enterApp to load configs first and handle admin
+const _origEnterApp = enterApp;
+enterApp = async function() {
+  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig()]);
+
+  // Admin setup
+  isAdmin = !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+  if (isAdmin) {
+    document.getElementById('btnAdmin').style.display = '';
+    document.getElementById('userDot').classList.add('admin');
+  }
+
+  _origEnterApp();
+
+  if (isAdmin) adminInit();
+};
+
+// Patch logout to reset admin state
+const _origLogout = logout;
+logout = async function() {
+  isAdmin = false;
+  document.getElementById('btnAdmin').style.display = 'none';
+  const dot = document.getElementById('userDot');
+  if (dot) dot.classList.remove('admin');
+  await _origLogout();
+};
+
+// Patch switchCompetition to handle ADMIN mode
+const _origSwitchCompetition = switchCompetition;
+switchCompetition = function(mode) {
+  if (mode === 'ADMIN') {
+    if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+    document.getElementById('btnSGP').className = 'comp-btn';
+    document.getElementById('btnSWC').className = 'comp-btn';
+    document.getElementById('btnAdmin').className = 'comp-btn active-admin';
+    document.getElementById('logoText').textContent = 'SGP';
+    document.getElementById('logoSub').textContent = 'Адмін';
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screenAdmin').classList.add('active');
+    return;
+  }
+  // If coming back from admin screen — ensure screenMain is shown
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('btnAdmin').className = 'comp-btn';
+  _origSwitchCompetition(mode);
+};
+
+// ─── Admin state ───────────────────────────────────────────────
 let adminActiveRoundId = null;
 let adminActiveSwcTeam = null;
 let adminSelectedBatchRounds = new Set();
@@ -1383,25 +1445,22 @@ function adminInit() {
   adminRenderRoundSelector();
   adminRenderBatchPicker();
   adminRenderSwcTeamTabs();
-  // Select first round by default
-  if(SEASON.rounds.length) adminSelectRound(SEASON.rounds[0].id);
-  // Select first SWC team by default
+  if (SEASON.rounds.length) adminSelectRound(SEASON.rounds[0].id);
   const firstTeam = Object.keys(SWC_TEAMS)[0];
-  if(firstTeam) adminSelectSwcTeam(firstTeam);
+  if (firstTeam) adminSelectSwcTeam(firstTeam);
 }
 
 function showAdminSection(id) {
-  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.admin-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  const idx = id==='adminSgp'?0:1;
-  document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
+  document.querySelectorAll('.admin-nav-btn')[id === 'adminSgp' ? 0 : 1].classList.add('active');
 }
 
-// ── SGP Round selector ──
+// ── SGP round selector ──
 function adminRenderRoundSelector() {
   const wrap = document.getElementById('adminRoundSelector');
-  if(!wrap) return;
+  if (!wrap) return;
   wrap.innerHTML = SEASON.rounds.map(r => {
     const d = new Date(r.date), ds = d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
     const isActive = r.id === adminActiveRoundId;
@@ -1411,24 +1470,24 @@ function adminRenderRoundSelector() {
 
 function adminRenderBatchPicker() {
   const wrap = document.getElementById('adminBatchRoundPicker');
-  if(!wrap) return;
+  if (!wrap) return;
   wrap.innerHTML = SEASON.rounds.map(r => {
     const d = new Date(r.date), ds = d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
     const sel = adminSelectedBatchRounds.has(r.id);
-    return `<button class="admin-tab-s ${sel?'active':''}" onclick="adminToggleBatchRound('${r.id}', this)">${ds} ${escHtml(r.city.split(',')[0])}</button>`;
+    return `<button class="admin-tab-s ${sel?'active':''}" onclick="adminToggleBatchRound('${r.id}',this)">${ds} ${escHtml(r.city.split(',')[0])}</button>`;
   }).join('');
 }
 
 function adminToggleBatchRound(id, btn) {
-  if(adminSelectedBatchRounds.has(id)) { adminSelectedBatchRounds.delete(id); btn.classList.remove('active'); }
+  if (adminSelectedBatchRounds.has(id)) { adminSelectedBatchRounds.delete(id); btn.classList.remove('active'); }
   else { adminSelectedBatchRounds.add(id); btn.classList.add('active'); }
 }
 
 function adminSelectRound(id) {
   adminActiveRoundId = id;
   adminRenderRoundSelector();
-  const r = SEASON.rounds.find(x=>x.id===id);
-  if(!r) return;
+  const r = SEASON.rounds.find(x => x.id === id);
+  if (!r) return;
   document.getElementById('adminRiderCardTitle').textContent = r.name;
   document.getElementById('adminRiderCardMeta').textContent = r.city + ' · ' + new Date(r.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
   adminSetStatus('');
@@ -1436,10 +1495,10 @@ function adminSelectRound(id) {
 }
 
 function adminLoadRiders() {
-  if(!adminActiveRoundId) return;
-  const r = SEASON.rounds.find(x=>x.id===adminActiveRoundId);
-  if(!r) return;
-  const riders = [...(r.riders || DEFAULT_RIDERS)];
+  if (!adminActiveRoundId) return;
+  const r = SEASON.rounds.find(x => x.id === adminActiveRoundId);
+  if (!r) return;
+  const riders = [...(r.riders || SGP_ALL_RIDERS)];
   adminRenderRiderList(riders);
   adminSyncBulk(riders);
   adminSetStatus('');
@@ -1447,25 +1506,22 @@ function adminLoadRiders() {
 
 function adminRenderRiderList(riders) {
   const wrap = document.getElementById('riderListEditor');
-  if(!wrap) return;
+  if (!wrap) return;
   wrap.innerHTML = riders.map((name, i) => `
-    <div class="rider-row" id="riderRow${i}">
+    <div class="rider-row">
       <span class="rider-num">${i+1}</span>
       <input class="rider-input" type="text" value="${escHtml(name)}" placeholder="Прізвище" oninput="adminSyncBulkFromList()" maxlength="40" />
       <button class="rider-del-btn" onclick="adminDeleteRider(${i})" title="Видалити">✕</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function adminGetListRiders() {
   return Array.from(document.querySelectorAll('#riderListEditor .rider-input'))
-    .map(i=>i.value.trim().toUpperCase())
-    .filter(Boolean);
+    .map(i => i.value.trim().toUpperCase()).filter(Boolean);
 }
 
 function adminSyncBulkFromList() {
-  const riders = adminGetListRiders();
-  document.getElementById('adminBulkInput').value = riders.join('\n');
+  document.getElementById('adminBulkInput').value = adminGetListRiders().join('\n');
   adminSetStatus('');
 }
 
@@ -1475,7 +1531,7 @@ function adminSyncBulk(riders) {
 
 function adminBulkToList() {
   const raw = document.getElementById('adminBulkInput').value;
-  const riders = raw.split(/[\n,]+/).map(r=>r.trim().toUpperCase()).filter(Boolean);
+  const riders = raw.split(/[\n,]+/).map(r => r.trim().toUpperCase()).filter(Boolean);
   adminRenderRiderList(riders);
   adminSetStatus('');
 }
@@ -1484,96 +1540,77 @@ function adminAddRider() {
   const riders = adminGetListRiders();
   riders.push('');
   adminRenderRiderList(riders);
-  // Focus last input
   const inputs = document.querySelectorAll('#riderListEditor .rider-input');
-  if(inputs.length) inputs[inputs.length-1].focus();
+  if (inputs.length) inputs[inputs.length-1].focus();
   adminSyncBulkFromList();
 }
 
 function adminDeleteRider(idx) {
-  const riders = adminGetListRiders();
-  // Re-read from DOM to get all including the one being deleted
   const allInputs = Array.from(document.querySelectorAll('#riderListEditor .rider-input'));
-  const allVals = allInputs.map(i=>i.value.trim().toUpperCase());
-  allVals.splice(idx, 1);
-  adminRenderRiderList(allVals.filter(Boolean));
+  const vals = allInputs.map(i => i.value.trim().toUpperCase());
+  vals.splice(idx, 1);
+  adminRenderRiderList(vals.filter(Boolean));
   adminSyncBulkFromList();
 }
 
 function adminCopyFromDefault() {
-  adminRenderRiderList([...DEFAULT_RIDERS]);
-  adminSyncBulk([...DEFAULT_RIDERS]);
+  adminRenderRiderList([...SGP_ALL_RIDERS]);
+  adminSyncBulk([...SGP_ALL_RIDERS]);
   adminSetStatus('');
 }
 
 function adminCopyFromPrev() {
-  const idx = SEASON.rounds.findIndex(r=>r.id===adminActiveRoundId);
-  if(idx <= 0) { showToast('Це перший раунд — немає попереднього','error'); return; }
-  const prevRiders = [...(SEASON.rounds[idx-1].riders || DEFAULT_RIDERS)];
+  const idx = SEASON.rounds.findIndex(r => r.id === adminActiveRoundId);
+  if (idx <= 0) { showToast('Це перший раунд — немає попереднього','error'); return; }
+  const prevRiders = [...(SEASON.rounds[idx-1].riders || SGP_ALL_RIDERS)];
   adminRenderRiderList(prevRiders);
   adminSyncBulk(prevRiders);
   adminSetStatus('');
 }
 
 async function adminSaveRiders() {
-  if(!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
   const riders = adminGetListRiders();
-  if(riders.length < 4) { showToast('⚠️ Мінімум 4 гонщики','error'); return; }
-
-  adminSetStatus('Збереження...', false);
+  if (riders.length < 2) { showToast('⚠️ Мінімум 2 гонщики','error'); return; }
+  adminSetStatus('Збереження...');
   try {
-    // Update SEASON in memory
-    const r = SEASON.rounds.find(x=>x.id===adminActiveRoundId);
-    if(r) r.riders = riders;
-
-    // Save to Firestore config/sgp_riders
-    await db.collection('config').doc('sgp_riders').set(
-      { [adminActiveRoundId]: riders },
-      { merge: true }
-    );
+    const r = SEASON.rounds.find(x => x.id === adminActiveRoundId);
+    if (r) r.riders = riders;
+    await db.collection('config').doc('sgp_riders').set({ [adminActiveRoundId]: riders }, { merge: true });
     adminSetStatus(`✓ Збережено ${riders.length} гонщиків · ${new Date().toLocaleTimeString('uk-UA')}`, true);
-    showToast(`✓ Список гонщиків збережено (${riders.length})`, 'success');
-    // Refresh selects if currently viewing this round
-    if(ACTIVE_ROUND.id === adminActiveRoundId) populateSelects();
+    showToast(`✓ Список збережено (${riders.length} гонщиків)`, 'success');
+    if (ACTIVE_ROUND.id === adminActiveRoundId) populateSelects();
   } catch(e) {
     adminSetStatus('❌ Помилка: '+e.message, false, true);
-    showToast('❌ Помилка: '+e.message, 'error');
+    showToast('❌ '+e.message,'error');
   }
 }
 
 async function adminBatchSave() {
-  if(!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
-  if(adminSelectedBatchRounds.size === 0) { showToast('⚠️ Оберіть раунди','error'); return; }
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  if (adminSelectedBatchRounds.size === 0) { showToast('⚠️ Оберіть хоча б один раунд','error'); return; }
   const riders = adminGetListRiders();
-  if(riders.length < 4) { showToast('⚠️ Спочатку збережіть поточний список','error'); return; }
-
+  if (riders.length < 2) { showToast('⚠️ Спочатку відредагуй список вище','error'); return; }
   const updates = {};
   adminSelectedBatchRounds.forEach(id => { updates[id] = riders; });
-
   try {
     await db.collection('config').doc('sgp_riders').set(updates, { merge: true });
-    // Update memory
-    adminSelectedBatchRounds.forEach(id => {
-      const r = SEASON.rounds.find(x=>x.id===id);
-      if(r) r.riders = [...riders];
-    });
-    showToast(`✓ Збережено до ${adminSelectedBatchRounds.size} раундів`, 'success');
-  } catch(e) {
-    showToast('❌ Помилка: '+e.message, 'error');
-  }
+    adminSelectedBatchRounds.forEach(id => { const r = SEASON.rounds.find(x=>x.id===id); if(r) r.riders=[...riders]; });
+    showToast(`✓ Збережено до ${adminSelectedBatchRounds.size} раундів`,'success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
 function adminSetStatus(msg, ok=false, err=false) {
   const el = document.getElementById('adminSgpStatus');
-  if(!el) return;
+  if (!el) return;
   el.textContent = msg;
-  el.className = 'admin-status-msg' + (ok?' ok':err?' err':'');
+  el.className = 'admin-status-msg'+(ok?' ok':err?' err':'');
 }
 
-// ── SWC Team editor ──
+// ── SWC team editor ──
 function adminRenderSwcTeamTabs() {
   const wrap = document.getElementById('swcTeamTabs');
-  if(!wrap) return;
+  if (!wrap) return;
   wrap.innerHTML = Object.keys(SWC_TEAMS).map(t => {
     const isActive = t === adminActiveSwcTeam;
     return `<button class="admin-tab-s ${isActive?'active':''}" onclick="adminSelectSwcTeam('${escHtml(t)}')">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</button>`;
@@ -1590,9 +1627,9 @@ function adminSelectSwcTeam(teamName) {
 }
 
 function adminLoadSwcTeam() {
-  if(!adminActiveSwcTeam) return;
+  if (!adminActiveSwcTeam) return;
   const team = SWC_TEAMS[adminActiveSwcTeam];
-  if(!team) return;
+  if (!team) return;
   const riders = [...(team.riders||[])];
   swcAdminRenderRiderList(riders);
   document.getElementById('swcBulkInput').value = riders.join('\n');
@@ -1601,31 +1638,28 @@ function adminLoadSwcTeam() {
 
 function swcAdminRenderRiderList(riders) {
   const wrap = document.getElementById('swcRiderListEditor');
-  if(!wrap) return;
+  if (!wrap) return;
   wrap.innerHTML = riders.map((name, i) => `
     <div class="rider-row">
       <span class="rider-num">${i+1}</span>
       <input class="rider-input" type="text" value="${escHtml(name)}" placeholder="Прізвище" oninput="swcAdminSyncBulk()" maxlength="40" />
       <button class="rider-del-btn" onclick="swcAdminDeleteRider(${i})" title="Видалити">✕</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function swcAdminGetRiders() {
   return Array.from(document.querySelectorAll('#swcRiderListEditor .rider-input'))
-    .map(i=>i.value.trim().toUpperCase())
-    .filter(Boolean);
+    .map(i => i.value.trim().toUpperCase()).filter(Boolean);
 }
 
 function swcAdminSyncBulk() {
-  const riders = swcAdminGetRiders();
-  document.getElementById('swcBulkInput').value = riders.join('\n');
+  document.getElementById('swcBulkInput').value = swcAdminGetRiders().join('\n');
   adminSetSwcStatus('');
 }
 
 function swcBulkToList() {
   const raw = document.getElementById('swcBulkInput').value;
-  const riders = raw.split(/[\n,]+/).map(r=>r.trim().toUpperCase()).filter(Boolean);
+  const riders = raw.split(/[\n,]+/).map(r => r.trim().toUpperCase()).filter(Boolean);
   swcAdminRenderRiderList(riders);
   adminSetSwcStatus('');
 }
@@ -1635,54 +1669,41 @@ function swcAdminAddRider() {
   riders.push('');
   swcAdminRenderRiderList(riders);
   const inputs = document.querySelectorAll('#swcRiderListEditor .rider-input');
-  if(inputs.length) inputs[inputs.length-1].focus();
+  if (inputs.length) inputs[inputs.length-1].focus();
   swcAdminSyncBulk();
 }
 
 function swcAdminDeleteRider(idx) {
   const allInputs = Array.from(document.querySelectorAll('#swcRiderListEditor .rider-input'));
-  const vals = allInputs.map(i=>i.value.trim().toUpperCase());
+  const vals = allInputs.map(i => i.value.trim().toUpperCase());
   vals.splice(idx, 1);
   swcAdminRenderRiderList(vals.filter(Boolean));
   swcAdminSyncBulk();
 }
 
 async function adminSaveSwcTeam() {
-  if(!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
   const riders = swcAdminGetRiders();
-  if(riders.length < 1) { showToast('⚠️ Додайте хоча б одного гонщика','error'); return; }
-
+  if (riders.length < 1) { showToast('⚠️ Додайте хоча б одного гонщика','error'); return; }
   adminSetSwcStatus('Збереження...');
   try {
-    // Update memory
-    if(SWC_TEAMS[adminActiveSwcTeam]) SWC_TEAMS[adminActiveSwcTeam].riders = riders;
-
-    // Save to Firestore config/swc_teams
-    await db.collection('config').doc('swc_teams').set(
-      { [adminActiveSwcTeam]: riders },
-      { merge: true }
-    );
+    if (SWC_TEAMS[adminActiveSwcTeam]) SWC_TEAMS[adminActiveSwcTeam].riders = riders;
+    await db.collection('config').doc('swc_teams').set({ [adminActiveSwcTeam]: riders }, { merge: true });
     adminSetSwcStatus(`✓ Збережено ${riders.length} гонщиків · ${new Date().toLocaleTimeString('uk-UA')}`, true);
-    showToast(`✓ Склад ${adminActiveSwcTeam} збережено`, 'success');
-    // Refresh SWC form if currently viewing
-    if(currentCompetition === 'SWC') swcRenderTeamForm();
+    showToast(`✓ Склад ${adminActiveSwcTeam} збережено`,'success');
+    if (currentCompetition === 'SWC') swcRenderTeamForm();
   } catch(e) {
     adminSetSwcStatus('❌ Помилка: '+e.message, false, true);
-    showToast('❌ Помилка: '+e.message, 'error');
+    showToast('❌ '+e.message,'error');
   }
 }
 
 function adminSetSwcStatus(msg, ok=false, err=false) {
   const el = document.getElementById('adminSwcStatus');
-  if(!el) return;
+  if (!el) return;
   el.textContent = msg;
-  el.className = 'admin-status-msg' + (ok?' ok':err?' err':'');
+  el.className = 'admin-status-msg'+(ok?' ok':err?' err':'');
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  BOOT
-// ═══════════════════════════════════════════════════════════════
-setInterval(()=>{ localStorage.removeItem('sgp_race_checked_'+ACTIVE_ROUND.id); checkRaceStatus(); },3*60*1000);
 </script>
 </body>
 </html>
