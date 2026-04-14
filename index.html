@@ -1430,8 +1430,10 @@ switchCompetition = function(mode) {
     document.getElementById('screenAdmin').classList.add('active');
     return;
   }
-  // If coming back from admin screen — ensure screenMain is shown
-  document.getElementById('screenAdmin').classList.remove('active');
+  // Повертаємось з адміна: явно активуємо screenMain ДО виклику оригінальної функції,
+  // бо screenAdmin мав active і оригінальна функція не викликає showScreen()
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screenMain').classList.add('active');
   document.getElementById('btnAdmin').className = 'comp-btn';
   _origSwitchCompetition(mode);
 };
