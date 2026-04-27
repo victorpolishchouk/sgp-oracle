@@ -114,9 +114,13 @@
 
     .rider-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:14px;padding:10px 34px 10px 12px;outline:none;transition:border-color .2s;width:100%;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a68' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
     .rider-select:focus{border-color:var(--accent);outline:2px solid rgba(212,240,0,.3);outline-offset:2px}
-    .rider-select option{background:var(--card)}
+    .rider-select option{background:var(--card);color:var(--text)}
     .rider-select optgroup{background:var(--card);color:var(--muted);font-style:normal;font-size:11px}
     .rider-select:disabled{opacity:.5;cursor:not-allowed}
+    /* Світла тема: стрілка темна, option/optgroup явно темний текст на білому фоні */
+    :root[data-theme="light"] .rider-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2344445a' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")}
+    :root[data-theme="light"] .rider-select option{background:#ffffff;color:#14141c}
+    :root[data-theme="light"] .rider-select optgroup{background:#f0f0f2;color:#44445a}
 
     .top8-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media(max-width:500px){.top8-grid{grid-template-columns:1fr}}
@@ -224,8 +228,7 @@
     /* Light mode overrides for elements that need explicit fixes */
     :root[data-theme="light"] .loading-overlay{background:var(--bg)}
     :root[data-theme="light"] .spinner{border-color:var(--border);border-top-color:var(--accent2)}
-    :root[data-theme="light"] .field input,
-    :root[data-theme="light"] .rider-select{color:var(--text)}
+    :root[data-theme="light"] .field input{color:var(--text)}
     :root[data-theme="light"] .field input::placeholder{color:var(--muted)}
     :root[data-theme="light"] .toast{background:var(--card);color:var(--text)}
     :root[data-theme="light"] .admin-bulk-textarea{color:var(--text)}
