@@ -1180,20 +1180,46 @@ function switchRound(id) {
 // ═══════════════════════════════════════════════════════════════
 //  SELECTS — з optgroup для резервів
 // ═══════════════════════════════════════════════════════════════
+// Групи взаємного виключення ВСЕРЕДИНІ кожної секції
+// (два слоти в межах однієї секції не можуть мати однакового гонщика)
 const EX_GROUPS=[['top2_1','top2_2'],['top8_1','top8_2','top8_3','top8_4','top8_5','top8_6'],['podium1','podium2','podium3']];
 
-function rebuildGroupOptions(g) {
-  const sel={};
-  g.forEach(id=>{const v=document.getElementById(id)?.value;if(v)sel[id]=v;});
-  g.forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    const taken=new Set(g.filter(oid=>oid!==id&&sel[oid]).map(oid=>sel[oid]));
-    Array.from(el.options).forEach(o=>{if(!o.value)return;o.disabled=taken.has(o.value);});
+// Усі поля де гонщик може бути вибраний лише раз (крос-секційне виключення)
+const ALL_UNIQUE_FIELDS=['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6'];
+
+function rebuildAllSelects() {
+  // 1. Збираємо всі зайняті значення по ALL_UNIQUE_FIELDS
+  const globalTaken = {};
+  ALL_UNIQUE_FIELDS.forEach(id => {
+    const v = document.getElementById(id)?.value;
+    if (v) globalTaken[id] = v;
+  });
+
+  // 2. Для кожного поля з ALL_UNIQUE_FIELDS — забороняємо значення,
+  //    зайняті в БУДЬ-ЯКОМУ іншому полі (включно з іншою секцією)
+  ALL_UNIQUE_FIELDS.forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const taken = new Set(
+      Object.entries(globalTaken).filter(([k]) => k !== id).map(([,v]) => v)
+    );
+    Array.from(el.options).forEach(o => { if (!o.value) return; o.disabled = taken.has(o.value); });
+  });
+
+  // 3. Всередині кожної EX_GROUP додатково синхронізуємо (для podium1..3)
+  EX_GROUPS.forEach(g => {
+    const sel = {};
+    g.forEach(id => { const v = document.getElementById(id)?.value; if (v) sel[id] = v; });
+    g.forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      // Тільки якщо ця група НЕ покрита ALL_UNIQUE_FIELDS — додаємо обмеження
+      if (ALL_UNIQUE_FIELDS.includes(id)) return;
+      const taken = new Set(g.filter(oid => oid !== id && sel[oid]).map(oid => sel[oid]));
+      Array.from(el.options).forEach(o => { if (!o.value) return; o.disabled = taken.has(o.value); });
+    });
   });
 }
 
 function buildRiderOptions(riders) {
-  // Split into main (first 16) and reserves (17-18)
   const main = riders.filter(r => SGP_MAIN_RIDERS.includes(r));
   const reserves = riders.filter(r => SGP_RESERVE_RIDERS.includes(r));
   let html = '<option value="">— оберіть —</option>';
@@ -1214,7 +1240,16 @@ function populateSelects() {
     const el=document.getElementById(id);if(!el)return;
     el.innerHTML=buildRiderOptions(riders);
   });
-  EX_GROUPS.forEach(g=>g.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>{rebuildGroupOptions(g);updatePreview();});}));
+  // Вішаємо один обробник rebuildAllSelects на всі поля з крос-виключенням
+  ALL_UNIQUE_FIELDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change',()=>{ rebuildAllSelects(); updatePreview(); });
+  });
+  // Podium — лише внутрішнє виключення (не входить в ALL_UNIQUE_FIELDS)
+  ['podium1','podium2','podium3'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change',()=>{ rebuildAllSelects(); updatePreview(); });
+  });
   ['loser','winner'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',updatePreview);});
 }
 
@@ -1258,7 +1293,7 @@ async function loadUserPrediction() {
       ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
         const el=document.getElementById(id);if(el&&mine[id])el.value=mine[id];
       });
-      EX_GROUPS.forEach(g=>rebuildGroupOptions(g));
+      rebuildAllSelects();
       updatePreview();
       if(!raceLocked){const s=document.getElementById('btnSave');if(s)s.textContent='💾 ОНОВИТИ';document.getElementById('submitZoneTitle').textContent='Оновити прогноз';}
       if(raceLocked&&ACTIVE_ROUND.results){
