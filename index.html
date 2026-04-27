@@ -1019,6 +1019,7 @@ function setRaceLocked(locked,reason) {
   if(locked) setBanner('locked','🔒 Прийом прогнозів закрито',reason);
   else       setBanner('open','✅ Прийом прогнозів відкрито',reason);
   document.getElementById('footerStatus').textContent=reason;
+  _updateAllPredsTabLabel();
 }
 
 function setBanner(type,title,desc) {
@@ -1132,9 +1133,9 @@ async function enterApp() {
     }
     loadUserPrediction();
   });
-  renderAllPredictions();
   renderSwcRoundSelector();
   swcRenderTeamForm();
+  _updateAllPredsTabLabel();
 
   if (isAdmin) adminInit();
 }
@@ -1169,7 +1170,7 @@ function switchRound(id) {
   populateSelects();
   raceLocked=false;
   checkRaceStatus().then(()=>{ if(raceLocked)applyLockToForm(); loadUserPrediction(); });
-  renderAllPredictions();
+  // renderAllPredictions викликається при переході на таб «Всі прогнози»
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1231,7 +1232,6 @@ async function savePrediction() {
     await ref.set({...d,nickname:userNickname,email:currentUser.email,uid:currentUser.uid,savedAt:firebase.firestore.FieldValue.serverTimestamp(),roundId:ACTIVE_ROUND.id});
     showToast('✓ Прогноз збережено у Firebase!','success');
     loadUserPrediction();
-    renderAllPredictions();
   } catch(e){
     showToast('Помилка збереження: '+e.message,'error');
   }
@@ -1283,6 +1283,43 @@ async function renderAllPredictions() {
   const list=document.getElementById('allPredsList');
   const countEl=document.getElementById('allCount');
   if(!list)return;
+
+  // Визначаємо чи гонка заблокована для цього раунду
+  const _start=new Date(ACTIVE_ROUND.startDatetime);
+  const _isLocked = raceLocked || !!ACTIVE_ROUND.results || Date.now()>=_start.getTime();
+
+  // До старту — показуємо тільки кількість учасників та свій прогноз
+  if(!_isLocked){
+    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:12px"><span class="spinner"></span></div>';
+    try {
+      const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').get();
+      const total=snap.size;
+      if(countEl)countEl.textContent=total+' прогнозів';
+      const myDoc=currentUser?snap.docs.find(d=>d.id===currentUser.uid):null;
+      let html=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;text-align:center;margin-bottom:14px">
+        <div style="font-size:28px;margin-bottom:8px">🔒</div>
+        <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Прогнози приховані до старту гонки</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);line-height:1.6">Деталі прогнозів інших учасників стануть видимі<br>після блокування прийому — щоб уникнути впливу на вибір.</div>
+        ${total>0?`<div style="margin-top:14px;font-family:var(--font-head);font-size:22px;font-weight:900;color:var(--accent)">${total}</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${total===1?'учасник вже зробив прогноз':'учасників вже зробили прогноз'}</div>`:''}
+      </div>`;
+      // Свій прогноз показуємо завжди
+      if(myDoc){
+        const p=myDoc.data();
+        const time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';
+        const top2=[p.top2_1,p.top2_2].map(r=>`<span class="chip top2">🏆 ${escHtml(r)}</span>`).join('');
+        const top8=[p.top8_1,p.top8_2,p.top8_3,p.top8_4,p.top8_5,p.top8_6].filter(Boolean).map(r=>`<span class="chip top8">${escHtml(r)}</span>`).join('');
+        const loser=p.loser?`<span class="chip loser">💀 ${escHtml(p.loser)}</span>`:'';
+        const podium=[p.podium1,p.podium2,p.podium3].filter(Boolean).map((r,i)=>`<span class="chip top2">${['🥇','🥈','🥉'][i]} ${escHtml(r)}</span>`).join('');
+        const winner=p.winner?`<span class="chip top2">🎯 ${escHtml(p.winner)}</span>`:'';
+        html+=`<div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Твій прогноз</div>
+        <div class="all-pred-card" style="border-color:rgba(212,240,0,.25)"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')} <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span></span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${top2}${top8}${loser}${podium}${winner}</div></div>`;
+      }
+      list.innerHTML=html;
+    } catch(e){ list.innerHTML=`<div style="text-align:center;padding:30px;color:var(--red);font-family:var(--font-mono);font-size:12px">Помилка: ${escHtml(e.message)}</div>`; }
+    return;
+  }
+
+  // Після старту — показуємо всі прогнози
   list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:12px"><span class="spinner"></span></div>';
   try {
     const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
@@ -1428,6 +1465,18 @@ function showTab(id) {
   if(id==='tabAllPreds')renderAllPredictions();
   if(id==='tabResults'){renderOfficialResults();renderLeaderboard();}
   if(id==='tabSeason')renderSeasonStandings();
+  // Оновлюємо лейбл табу «Всі прогнози» залежно від статусу
+  _updateAllPredsTabLabel();
+}
+
+function _updateAllPredsTabLabel(){
+  const _start=new Date(ACTIVE_ROUND.startDatetime);
+  const _isLocked = raceLocked || !!ACTIVE_ROUND.results || Date.now()>=_start.getTime();
+  const btns=document.querySelectorAll('#screenMain>.nav-tabs .nav-tab');
+  btns.forEach(btn=>{
+    const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if(t==='tabAllPreds') btn.textContent = _isLocked ? 'Всі прогнози' : '🔒 Прогнози';
+  });
 }
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -1463,7 +1512,7 @@ function switchCompetition(mode){
     if(rs)rs.style.display='none';if(ah)ah.style.display='none';if(nt)nt.style.display='none';
     tabs.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
     document.getElementById('swcScreen').style.display='';
-    renderSwcRoundSelector();swcCheckRaceStatus();swcLoadUserPrediction();swcRenderAllPredictions();
+    renderSwcRoundSelector();swcCheckRaceStatus();swcLoadUserPrediction();
   } else {
     if(rs)rs.style.display='';if(ah)ah.style.display='';if(nt)nt.style.display='';
     document.getElementById('swcScreen').style.display='none';
@@ -1472,12 +1521,12 @@ function switchCompetition(mode){
 }
 
 function swcCheckRaceStatus(){const r=SWC_ACTIVE_ROUND,s=new Date(r.startDatetime),n=Date.now();if(r.results){swcSetLocked(true,'Результати опубліковано');return;}if(n>=s.getTime()){swcSetLocked(true,'Старт вже відбувся');return;}const d=s.getTime()-n,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);swcSetLocked(false,`До старту ~${h}г ${m}хв`);}
-function swcSetLocked(locked,reason){swcRaceLocked=locked;setBanner(locked?'locked':'open',locked?'🔒 Прийом SWC закрито':'✅ Прийом SWC відкрито',reason);document.getElementById('footerStatus').textContent=reason;if(locked)swcApplyLock();else swcReleaseLock();}
+function swcSetLocked(locked,reason){swcRaceLocked=locked;setBanner(locked?'locked':'open',locked?'🔒 Прийом SWC закрито':'✅ Прийом SWC відкрито',reason);document.getElementById('footerStatus').textContent=reason;if(locked)swcApplyLock();else swcReleaseLock();_updateSwcAllPredsTabLabel();}
 function swcApplyLock(){document.querySelectorAll('#swcFormWrap .swc-team-select').forEach(s=>s.disabled=true);const b=document.getElementById('swcBtnSave');if(b){b.disabled=true;b.textContent='🔒 ЗАБЛОКОВАНО';}}
 function swcReleaseLock(){document.querySelectorAll('#swcFormWrap .swc-team-select').forEach(s=>s.disabled=false);const b=document.getElementById('swcBtnSave');if(b){b.disabled=false;b.textContent='💾 ЗБЕРЕГТИ';}}
 
 function renderSwcRoundSelector(){const wrap=document.getElementById('swcRoundSelectorWrap');if(!wrap)return;wrap.innerHTML=SWC_SEASON.rounds.map(r=>{const done=!!r.results,isA=r.id===SWC_ACTIVE_ROUND.id,d=new Date(r.date),ds=d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});return`<button class="round-pill ${isA?'active':''} ${done?'done':''}" onclick="switchSwcRound('${r.id}')">${done?'✓ ':''}${ds}<br><span>${escHtml(r.name)}</span></button>`;}).join('');document.getElementById('swcRoundName').textContent=SWC_ACTIVE_ROUND.name;document.getElementById('swcRoundCity').textContent=SWC_ACTIVE_ROUND.city+' · '+new Date(SWC_ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});}
-function switchSwcRound(id){SWC_ACTIVE_ROUND=SWC_SEASON.rounds.find(r=>r.id===id);renderSwcRoundSelector();swcCheckRaceStatus();swcRenderTeamForm();swcLoadUserPrediction();swcRenderAllPredictions();}
+function switchSwcRound(id){SWC_ACTIVE_ROUND=SWC_SEASON.rounds.find(r=>r.id===id);renderSwcRoundSelector();swcCheckRaceStatus();swcRenderTeamForm();swcLoadUserPrediction();}
 
 function swcRenderTeamForm(){
   const round=SWC_ACTIVE_ROUND,teams=round.teams||round.teamsBase||[],n=teams.length,wrap=document.getElementById('swcTeamSections');if(!wrap)return;
@@ -1513,7 +1562,7 @@ async function swcSavePrediction(){
   try {
     await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').doc(currentUser.uid).set({picks,nickname:userNickname,email:currentUser.email,uid:currentUser.uid,savedAt:firebase.firestore.FieldValue.serverTimestamp(),roundId:SWC_ACTIVE_ROUND.id});
     showToast('✓ SWC прогноз збережено!','success');
-    swcLoadUserPrediction();swcRenderAllPredictions();
+    swcLoadUserPrediction();
   } catch(e){showToast('Помилка: '+e.message,'error');}
   btn.disabled=false;btn.textContent='💾 ОНОВИТИ';
 }
@@ -1538,6 +1587,36 @@ function swcCalcScore(picks,results){if(!picks||!results)return{score:0,details:
 
 async function swcRenderAllPredictions(){
   const list=document.getElementById('swcAllPredsList'),countEl=document.getElementById('swcAllCount');if(!list)return;
+
+  // Визначаємо чи SWC-раунд заблокований
+  const _swcStart=new Date(SWC_ACTIVE_ROUND.startDatetime);
+  const _swcLocked = swcRaceLocked || !!SWC_ACTIVE_ROUND.results || Date.now()>=_swcStart.getTime();
+
+  if(!_swcLocked){
+    list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></div>';
+    try {
+      const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').get();
+      const total=snap.size;
+      if(countEl)countEl.textContent=total+' прогнозів';
+      const myDoc=currentUser?snap.docs.find(d=>d.id===currentUser.uid):null;
+      let html=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;text-align:center;margin-bottom:14px">
+        <div style="font-size:28px;margin-bottom:8px">🔒</div>
+        <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Прогнози приховані до старту</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);line-height:1.6">Деталі прогнозів SWC стануть видимі після блокування прийому.</div>
+        ${total>0?`<div style="margin-top:14px;font-family:var(--font-head);font-size:22px;font-weight:900;color:#60b5ff">${total}</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${total===1?'учасник вже зробив прогноз':'учасників вже зробили прогноз'}</div>`:''}
+      </div>`;
+      if(myDoc){
+        const p=myDoc.data(),time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';
+        const chips=Object.entries(p.picks||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<span class="chip swc-team">${['🥇','🥈','🥉','4️⃣'][i]||''} ${escHtml(COUNTRY_FLAGS[team]||'')}${escHtml(team)}</span>`).join('');
+        html+=`<div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#60b5ff;margin-bottom:8px">Твій прогноз</div>
+        <div class="all-pred-card" style="border-color:rgba(10,132,255,.3)"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')} <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span></span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${chips}</div></div>`;
+      }
+      list.innerHTML=html;
+    } catch(e){list.innerHTML=`<div style="color:var(--red);padding:20px">Помилка: ${escHtml(e.message)}</div>`;}
+    return;
+  }
+
+  // Після старту — всі прогнози
   list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></div>';
   try {
     const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
@@ -1551,7 +1630,16 @@ async function swcRenderOfficialResults(){const R=SWC_ACTIVE_ROUND.results,g=doc
 
 async function swcRenderLeaderboard(){const R=SWC_ACTIVE_ROUND.results,list=document.getElementById('swcLeaderboardList'),ce=document.getElementById('swcLbCount');if(!list)return;if(!R){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результати ще не опубліковано</div>';return;}try{const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').get();if(ce)ce.textContent=snap.size+' учасників';const scored=snap.docs.map(doc=>({uid:doc.id,...doc.data(),...swcCalcScore(doc.data().picks,R)})).sort((a,b)=>b.score-a.score);const em=['🥇','🥈','🥉'];let ps=null,rk=0,di=0;list.innerHTML=scored.map(p=>{di++;if(p.score!==ps){rk=di;ps=p.score;}const isMe=currentUser&&p.uid===currentUser.uid,rc=rk===1?'var(--accent)':rk===2?'#c0c0c0':rk===3?'#cd7f32':'var(--muted)';const chips=(p.details||[]).map(d=>`<span class="lb-chip ${d.pts>0?'has-pts':''}">${escHtml(d.label)}: ${d.pts}</span>`).join('');return`<div class="lb-row ${rk<=3?'rank-'+rk:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rc}">${rk<=3?em[rk-1]:rk+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score" style="color:#60b5ff">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;}).join('');}catch(e){list.innerHTML=`<div style="color:var(--red);padding:20px">Помилка: ${escHtml(e.message)}</div>`;}}
 
-function showSwcTab(id){['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});document.querySelectorAll('#swcScreen .nav-tabs .nav-tab').forEach(btn=>{const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];btn.classList.toggle('active',t===id);});if(id==='swcTabAll')swcRenderAllPredictions();if(id==='swcTabResults'){swcRenderOfficialResults();swcRenderLeaderboard();}if(id==='swcTabSeason')swcRenderSeasonStandings();}
+function showSwcTab(id){['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});document.querySelectorAll('#swcScreen .nav-tabs .nav-tab').forEach(btn=>{const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];btn.classList.toggle('active',t===id);});if(id==='swcTabAll')swcRenderAllPredictions();if(id==='swcTabResults'){swcRenderOfficialResults();swcRenderLeaderboard();}if(id==='swcTabSeason')swcRenderSeasonStandings();_updateSwcAllPredsTabLabel();}
+
+function _updateSwcAllPredsTabLabel(){
+  const _swcStart=new Date(SWC_ACTIVE_ROUND.startDatetime);
+  const _isLocked = swcRaceLocked || !!SWC_ACTIVE_ROUND.results || Date.now()>=_swcStart.getTime();
+  document.querySelectorAll('#swcScreen .nav-tabs .nav-tab').forEach(btn=>{
+    const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    if(t==='swcTabAll') btn.textContent = _isLocked ? 'Всі прогнози' : '🔒 Прогнози';
+  });
+}
 
 async function swcRenderSeasonStandings(){const list=document.getElementById('swcSeasonList'),ce=document.getElementById('swcSeasonCount');if(!list)return;const comp=SWC_SEASON.rounds.filter(r=>r.results);if(ce)ce.textContent=`${comp.length} / ${SWC_SEASON.rounds.length} раундів`;if(!comp.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результатів ще немає</div>';return;}const um={};for(const r of comp){const s=await db.collection('swc_predictions').doc(r.id).collection('users').get();s.docs.forEach(doc=>{const p=doc.data();if(!um[doc.id])um[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,cnt:0};const{score}=swcCalcScore(p.picks,r.results);um[doc.id].rounds[r.id]=score;um[doc.id].total+=score;um[doc.id].cnt++;});}const users=Object.values(um).sort((a,b)=>b.total-a.total);if(!users.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Немає даних</div>';return;}const em=['🥇','🥈','🥉'];let pt=null,rk=0,di=0;list.innerHTML=users.map(u=>{di++;if(u.total!==pt){rk=di;pt=u.total;}const isMe=currentUser&&u.uid===currentUser.uid,rc=rk===1?'var(--accent)':rk===2?'#c0c0c0':rk===3?'#cd7f32':'var(--muted)';const cells=comp.map(r=>{const sc=u.rounds[r.id];return`<div style="text-align:center;min-width:40px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${escHtml(r.name.replace('Semi-Final ','SF').replace('Final','F'))}</div><div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${sc!==undefined?'var(--text)':'var(--muted)'}">${sc!==undefined?sc:'—'}</div></div>`;}).join('');return`<div class="lb-row ${rk<=3?'rank-'+rk:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rc}">${rk<=3?em[rk-1]:rk+'.'}</div><div class="lb-info" style="flex:1"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div><div style="text-align:right"><div class="lb-score" style="color:#60b5ff">${u.total}</div><div class="lb-score-lbl">${u.cnt} р.</div></div></div>`;}).join('');}
 
