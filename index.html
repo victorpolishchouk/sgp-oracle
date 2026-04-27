@@ -1561,34 +1561,118 @@ function switchCompetition(mode){
 
 function swcCheckRaceStatus(){const r=SWC_ACTIVE_ROUND,s=new Date(r.startDatetime),n=Date.now();if(r.results){swcSetLocked(true,'Результати опубліковано');return;}if(n>=s.getTime()){swcSetLocked(true,'Старт вже відбувся');return;}const d=s.getTime()-n,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);swcSetLocked(false,`До старту ~${h}г ${m}хв`);}
 function swcSetLocked(locked,reason){swcRaceLocked=locked;setBanner(locked?'locked':'open',locked?'🔒 Прийом SWC закрито':'✅ Прийом SWC відкрито',reason);document.getElementById('footerStatus').textContent=reason;if(locked)swcApplyLock();else swcReleaseLock();_updateSwcAllPredsTabLabel();}
-function swcApplyLock(){document.querySelectorAll('#swcFormWrap .swc-team-select').forEach(s=>s.disabled=true);const b=document.getElementById('swcBtnSave');if(b){b.disabled=true;b.textContent='🔒 ЗАБЛОКОВАНО';}}
-function swcReleaseLock(){document.querySelectorAll('#swcFormWrap .swc-team-select').forEach(s=>s.disabled=false);const b=document.getElementById('swcBtnSave');if(b){b.disabled=false;b.textContent='💾 ЗБЕРЕГТИ';}}
+function swcApplyLock(){
+  document.querySelectorAll('#swcFormWrap .swc-team-select,#swcFormWrap .swc-toprider-select,#swcLoserTeam').forEach(s=>s.disabled=true);
+  const b=document.getElementById('swcBtnSave');if(b){b.disabled=true;b.textContent='🔒 ЗАБЛОКОВАНО';}
+}
+function swcReleaseLock(){
+  document.querySelectorAll('#swcFormWrap .swc-team-select,#swcFormWrap .swc-toprider-select,#swcLoserTeam').forEach(s=>s.disabled=false);
+  const b=document.getElementById('swcBtnSave');if(b){b.disabled=false;b.textContent='💾 ЗБЕРЕГТИ';}
+}
 
 function renderSwcRoundSelector(){const wrap=document.getElementById('swcRoundSelectorWrap');if(!wrap)return;wrap.innerHTML=SWC_SEASON.rounds.map(r=>{const done=!!r.results,isA=r.id===SWC_ACTIVE_ROUND.id,d=new Date(r.date),ds=d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});return`<button class="round-pill ${isA?'active':''} ${done?'done':''}" onclick="switchSwcRound('${r.id}')">${done?'✓ ':''}${ds}<br><span>${escHtml(r.name)}</span></button>`;}).join('');document.getElementById('swcRoundName').textContent=SWC_ACTIVE_ROUND.name;document.getElementById('swcRoundCity').textContent=SWC_ACTIVE_ROUND.city+' · '+new Date(SWC_ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});}
 function switchSwcRound(id){SWC_ACTIVE_ROUND=SWC_SEASON.rounds.find(r=>r.id===id);renderSwcRoundSelector();swcCheckRaceStatus();swcRenderTeamForm();swcLoadUserPrediction();}
 
 function swcRenderTeamForm(){
-  const round=SWC_ACTIVE_ROUND,teams=round.teams||round.teamsBase||[],n=teams.length,wrap=document.getElementById('swcTeamSections');if(!wrap)return;
-  wrap.innerHTML=`<div class="section-title" style="margin-bottom:12px"><span>Учасники — ${escHtml(round.name)}</span><span class="points-badge">${n} команди</span></div>
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
-    ${Array.from({length:n},(_,i)=>`<div style="display:flex;align-items:center;gap:10px"><div style="font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--muted);width:28px;text-align:center">${i+1}.</div><select class="rider-select swc-team-select" id="swcRank${i+1}" style="flex:1"><option value="">— команду —</option>${teams.map(t=>`<option value="${escHtml(t)}">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</option>`).join('')}</select></div>`).join('')}
-  </div>
-  <div class="section-title" style="margin-bottom:12px"><span>Команди</span></div>
-  <div class="team-grid">${teams.map(t=>{const td=SWC_TEAMS[t]||{riders:['TBD']};return`<div class="team-card"><div class="team-flag">${escHtml(COUNTRY_FLAGS[t]||'🏴')}</div><div class="team-name">${escHtml(t)}</div><div class="team-riders">${td.riders.slice(0,4).map(escHtml).join(', ')}</div></div>`;}).join('')}</div>`;
-  document.querySelectorAll('.swc-team-select').forEach(s=>s.addEventListener('change',swcOnTeamSelect));
-  document.getElementById('swcPreviewTotal').textContent=n;swcUpdatePreview();if(swcRaceLocked)swcApplyLock();
+  const round=SWC_ACTIVE_ROUND, teams=round.teams||round.teamsBase||[], n=teams.length, wrap=document.getElementById('swcTeamSections');
+  if(!wrap)return;
+
+  const teamOpts = '<option value="">— команда —</option>'+teams.map(t=>`<option value="${escHtml(t)}">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</option>`).join('');
+
+  // Категорія 2: для кожної команди — окремий select з її гонщиками
+  const cat2rows = teams.map(t=>{
+    const td=SWC_TEAMS[t]||{riders:[]};
+    const riderOpts='<option value="">— гонщик —</option>'+td.riders.map(r=>`<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center">
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text)">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</div>
+      <select class="rider-select swc-toprider-select" id="swcTopRider_${escHtml(t)}" data-team="${escHtml(t)}">${riderOpts}</select>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div class="section-title" style="margin-bottom:12px"><span>Категорія 1 — Топ 4 позиції команд</span><span class="points-badge">макс. +4 пкт</span></div>
+    <div class="pred-group" style="margin-bottom:20px">
+      <div class="pred-group-label"><span>${n} команди</span><span class="pred-group-pts">+1 за кожну вгадану позицію</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        ${Array.from({length:n},(_,i)=>`<div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--muted);width:28px;text-align:center">${i+1}.</div>
+          <select class="rider-select swc-team-select" id="swcRank${i+1}" style="flex:1"><option value="">— команду —</option>${teams.map(t=>`<option value="${escHtml(t)}">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</option>`).join('')}</select>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:12px"><span>Категорія 2 — Топ гонщик команди</span><span class="points-badge">макс. +${n} пкт</span></div>
+    <div class="pred-group" style="margin-bottom:20px">
+      <div class="pred-group-label"><span>Гонщик з найбільшою кількістю очок від кожної команди</span><span class="pred-group-pts">+1 за кожного вгаданого</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${cat2rows}</div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:12px"><span>Категорія 3 — Команда невдаха</span><span class="points-badge">+1 пкт</span></div>
+    <div class="pred-group" style="margin-bottom:20px">
+      <div class="pred-group-label"><span>Команда з найменшою кількістю очок за гонку</span><span class="pred-group-pts">+1 за вгадану команду</span></div>
+      <select class="rider-select" id="swcLoserTeam" style="margin-top:8px">${teamOpts}</select>
+    </div>
+
+    <div class="section-title" style="margin-bottom:12px"><span>Команди учасники</span></div>
+    <div class="team-grid">${teams.map(t=>{const td=SWC_TEAMS[t]||{riders:['TBD']};return`<div class="team-card"><div class="team-flag">${escHtml(COUNTRY_FLAGS[t]||'🏴')}</div><div class="team-name">${escHtml(t)}</div><div class="team-riders">${td.riders.slice(0,4).map(escHtml).join(', ')}</div></div>`;}).join('')}
+    </div>`;
+
+  document.querySelectorAll('.swc-team-select').forEach(s=>s.addEventListener('change',()=>{swcSyncTeamExclusion();swcUpdatePreview();}));
+  document.querySelectorAll('.swc-toprider-select').forEach(s=>s.addEventListener('change',swcUpdatePreview));
+  document.getElementById('swcLoserTeam')?.addEventListener('change',swcUpdatePreview);
+  swcUpdatePreview();
+  if(swcRaceLocked)swcApplyLock();
 }
 
-function swcOnTeamSelect(){const sels=Array.from(document.querySelectorAll('.swc-team-select'));sels.forEach(s=>{const o=new Set(sels.filter(x=>x!==s&&x.value).map(x=>x.value));Array.from(s.options).forEach(opt=>{if(!opt.value)return;opt.disabled=o.has(opt.value);});});swcUpdatePreview();}
-function swcUpdatePreview(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),f=sels.filter(s=>s.value).length,t=sels.length;document.getElementById('swcPreviewFilled').textContent=f;document.getElementById('swcPreviewTotal').textContent=t;document.getElementById('swcSubmitDesc').textContent=f===t?'✓ Всі команди розставлено.':'Розставте всі '+t+' команди ('+(t-f)+' залишилось)';}
+function swcSyncTeamExclusion(){
+  const sels=Array.from(document.querySelectorAll('.swc-team-select'));
+  sels.forEach(s=>{
+    const taken=new Set(sels.filter(x=>x!==s&&x.value).map(x=>x.value));
+    Array.from(s.options).forEach(opt=>{if(!opt.value)return;opt.disabled=taken.has(opt.value);});
+  });
+}
+
+function swcUpdatePreview(){
+  const teams=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
+  const n=teams.length;
+  // Cat1: rank slots
+  const rankFilled=Array.from(document.querySelectorAll('.swc-team-select')).filter(s=>s.value).length;
+  // Cat2: top rider per team
+  const riderFilled=Array.from(document.querySelectorAll('.swc-toprider-select')).filter(s=>s.value).length;
+  // Cat3: loser team
+  const loserFilled=document.getElementById('swcLoserTeam')?.value?1:0;
+  const total=n+n+1; // rank + toprider + loser
+  const filled=rankFilled+riderFilled+loserFilled;
+  document.getElementById('swcPreviewFilled').textContent=filled;
+  document.getElementById('swcPreviewTotal').textContent=total;
+  document.getElementById('swcSubmitDesc').textContent=filled===total?'✓ Всі поля заповнено.':'Залишилось '+(total-filled)+' полів ('+(n-rankFilled)+' позиції, '+(n-riderFilled)+' гонщики, '+(1-loserFilled)+' невдаха)';
+}
+
 function swcClearForm(){
   if(swcRaceLocked)return;
-  document.querySelectorAll('.swc-team-select').forEach(s=>{s.value='';});
-  document.querySelectorAll('.swc-team-select option').forEach(o=>o.disabled=false);
+  document.querySelectorAll('.swc-team-select,.swc-toprider-select').forEach(s=>{s.value='';});
+  document.querySelectorAll('.swc-team-select option,.swc-toprider-select option').forEach(o=>o.disabled=false);
+  const lt=document.getElementById('swcLoserTeam');if(lt)lt.value='';
   swcUpdatePreview();
 }
-function swcGetPrediction(){const sels=Array.from(document.querySelectorAll('.swc-team-select')),picks={};sels.forEach((s,i)=>{if(s.value)picks[`rank${i+1}`]=s.value;});return picks;}
-function swcValidate(picks){const n=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]).length;for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця.`;}if(new Set(Object.values(picks)).size!==Object.values(picks).length)return'Кожна команда на одному місці.';return null;}
+
+function swcGetPrediction(){
+  const picks={};
+  document.querySelectorAll('.swc-team-select').forEach((s,i)=>{if(s.value)picks[`rank${i+1}`]=s.value;});
+  document.querySelectorAll('.swc-toprider-select').forEach(s=>{if(s.value)picks[`topRider_${s.dataset.team}`]=s.value;});
+  const lt=document.getElementById('swcLoserTeam');if(lt&&lt.value)picks.loserTeam=lt.value;
+  return picks;
+}
+
+function swcValidate(picks){
+  const teams=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
+  const n=teams.length;
+  for(let i=1;i<=n;i++){if(!picks[`rank${i}`])return`Оберіть команду для ${i}-го місця (категорія 1).`;}
+  if(new Set(Array.from({length:n},(_,i)=>picks[`rank${i+1}`])).size!==n)return'Кожна команда може бути лише на одній позиції.';
+  for(const t of teams){if(!picks[`topRider_${t}`])return`Оберіть топ гонщика для ${t} (категорія 2).`;}
+  if(!picks.loserTeam)return'Оберіть команду невдаху (категорія 3).';
+  return null;
+}
 
 async function swcSavePrediction(){
   const _swcStart = new Date(SWC_ACTIVE_ROUND.startDatetime);
@@ -1615,14 +1699,69 @@ async function swcLoadUserPrediction(){
       const mine=snap.data();if(sb)sb.style.display='';
       document.getElementById('swcSavedTime').textContent='Збережено: '+(mine.savedAt?.toDate?.()?.toLocaleString('uk-UA')||'—');
       swcRenderSavedGrid(mine.picks);
-      const sels=Array.from(document.querySelectorAll('.swc-team-select'));sels.forEach((s,i)=>{if(mine.picks[`rank${i+1}`])s.value=mine.picks[`rank${i+1}`];});swcOnTeamSelect();
-      document.getElementById('swcBtnSave').textContent='💾 ОНОВИТИ';document.getElementById('swcSubmitTitle').textContent='Оновити прогноз';
-    } else {if(sb)sb.style.display='none';document.querySelectorAll('.swc-team-select').forEach(s=>s.value='');const b=document.getElementById('swcBtnSave');if(b){b.textContent='💾 ЗБЕРЕГТИ';b.disabled=swcRaceLocked;}document.getElementById('swcSubmitTitle').textContent='Готові до збереження?';swcUpdatePreview();}
+      // Відновлюємо rank selects
+      const rankSels=Array.from(document.querySelectorAll('.swc-team-select'));
+      rankSels.forEach((s,i)=>{if(mine.picks[`rank${i+1}`])s.value=mine.picks[`rank${i+1}`];});
+      swcSyncTeamExclusion();
+      // Відновлюємо topRider selects
+      document.querySelectorAll('.swc-toprider-select').forEach(s=>{
+        const v=mine.picks[`topRider_${s.dataset.team}`];if(v)s.value=v;
+      });
+      // Відновлюємо loserTeam
+      const lt=document.getElementById('swcLoserTeam');if(lt&&mine.picks.loserTeam)lt.value=mine.picks.loserTeam;
+      swcUpdatePreview();
+      document.getElementById('swcBtnSave').textContent='💾 ОНОВИТИ';
+      document.getElementById('swcSubmitTitle').textContent='Оновити прогноз';
+    } else {
+      if(sb)sb.style.display='none';
+      document.querySelectorAll('.swc-team-select,.swc-toprider-select').forEach(s=>s.value='');
+      const lt=document.getElementById('swcLoserTeam');if(lt)lt.value='';
+      const b=document.getElementById('swcBtnSave');if(b){b.textContent='💾 ЗБЕРЕГТИ';b.disabled=swcRaceLocked;}
+      document.getElementById('swcSubmitTitle').textContent='Готові до збереження?';
+      swcUpdatePreview();
+    }
   } catch(e){console.error('swcLoad:',e);}
 }
 
-function swcRenderSavedGrid(picks){const g=document.getElementById('swcSavedGrid');if(!g)return;const em=['🥇','🥈','🥉','4️⃣'];g.innerHTML=Object.entries(picks||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<div class="saved-item"><div class="saved-item-lbl">${em[i]||i+1+'-е'}</div><div class="saved-item-val" style="color:#60b5ff">${escHtml(COUNTRY_FLAGS[team]||'🏴')} ${escHtml(team||'—')}</div></div>`).join('');}
-function swcCalcScore(picks,results){if(!picks||!results)return{score:0,details:[]};let score=0;const details=[],ranking=results.ranking||[];Object.entries(picks).forEach(([rank,team])=>{const pos=parseInt(rank.slice(4))-1,ok=ranking[pos]===team,pts=ok?2:0;score+=pts;details.push({label:`${pos+1}-е: ${COUNTRY_FLAGS[team]||''}${team}`,pts});});return{score,details};}
+function swcRenderSavedGrid(picks){
+  const g=document.getElementById('swcSavedGrid');if(!g)return;
+  const teams=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
+  const em=['🥇','🥈','🥉','4️⃣'];
+  // Cat1: ranking
+  const rankItems=teams.map((_,i)=>{const t=picks[`rank${i+1}`]||'—';return`<div class="saved-item"><div class="saved-item-lbl">${em[i]||i+1+'-е місце'}</div><div class="saved-item-val" style="color:#60b5ff">${escHtml(COUNTRY_FLAGS[t]||'')} ${escHtml(t)}</div></div>`;});
+  // Cat2: top riders
+  const riderItems=teams.map(t=>{const r=picks[`topRider_${t}`]||'—';return`<div class="saved-item"><div class="saved-item-lbl">⭐ ${escHtml(t)}</div><div class="saved-item-val">${escHtml(r)}</div></div>`;});
+  // Cat3: loser
+  const lt=picks.loserTeam||'—';
+  const loserItem=`<div class="saved-item"><div class="saved-item-lbl">💀 Невдаха</div><div class="saved-item-val red">${escHtml(COUNTRY_FLAGS[lt]||'')} ${escHtml(lt)}</div></div>`;
+  g.innerHTML=rankItems.join('')+riderItems.join('')+loserItem;
+}
+
+function swcCalcScore(picks,results){
+  if(!picks||!results)return{score:0,details:[]};
+  let score=0;const details=[];
+  // Cat1: ranking (+1 за позицію)
+  const ranking=results.ranking||[];
+  ranking.forEach((team,i)=>{
+    const ok=picks[`rank${i+1}`]===team;
+    const pts=ok?1:0;score+=pts;
+    details.push({label:`${['🥇','🥈','🥉','4️⃣'][i]||i+1+'-е'} ${COUNTRY_FLAGS[team]||''}${team}`,pts,cat:1});
+  });
+  // Cat2: top rider per team (+1 за кожного)
+  const topRiders=results.topRiders||{};
+  Object.entries(topRiders).forEach(([team,rider])=>{
+    const ok=picks[`topRider_${team}`]===rider;
+    const pts=ok?1:0;score+=pts;
+    details.push({label:`⭐ ${COUNTRY_FLAGS[team]||''}${team}: ${rider}`,pts,cat:2});
+  });
+  // Cat3: loser team (+1)
+  if(results.loserTeam){
+    const ok=picks.loserTeam===results.loserTeam;
+    const pts=ok?1:0;score+=pts;
+    details.push({label:`💀 ${COUNTRY_FLAGS[results.loserTeam]||''}${results.loserTeam}`,pts,cat:3});
+  }
+  return{score,details};
+}
 
 async function swcRenderAllPredictions(){
   const list=document.getElementById('swcAllPredsList'),countEl=document.getElementById('swcAllCount');if(!list)return;
@@ -1646,9 +1785,13 @@ async function swcRenderAllPredictions(){
       </div>`;
       if(myDoc){
         const p=myDoc.data(),time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';
-        const chips=Object.entries(p.picks||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<span class="chip swc-team">${['🥇','🥈','🥉','4️⃣'][i]||''} ${escHtml(COUNTRY_FLAGS[team]||'')}${escHtml(team)}</span>`).join('');
+        const teams2=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
+        const em2=['🥇','🥈','🥉','4️⃣'];
+        const rankChips=teams2.map((_,i)=>{const t=p.picks?.[`rank${i+1}`];return t?`<span class="chip swc-team">${em2[i]||''} ${escHtml(COUNTRY_FLAGS[t]||'')}${escHtml(t)}</span>`:''}).join('');
+        const riderChips=teams2.map(t=>{const r=p.picks?.[`topRider_${t}`];return r?`<span class="chip top8">⭐ ${escHtml(r)}</span>`:''}).join('');
+        const loserChip=p.picks?.loserTeam?`<span class="chip loser">💀 ${escHtml(COUNTRY_FLAGS[p.picks.loserTeam]||'')}${escHtml(p.picks.loserTeam)}</span>`:'';
         html+=`<div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#60b5ff;margin-bottom:8px">Твій прогноз</div>
-        <div class="all-pred-card" style="border-color:rgba(10,132,255,.3)"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')} <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span></span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${chips}</div></div>`;
+        <div class="all-pred-card" style="border-color:rgba(10,132,255,.3)"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')} <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span></span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${rankChips}${riderChips}${loserChip}</div></div>`;
       }
       list.innerHTML=html;
     } catch(e){list.innerHTML=`<div style="color:var(--red);padding:20px">Помилка: ${escHtml(e.message)}</div>`;}
@@ -1661,11 +1804,36 @@ async function swcRenderAllPredictions(){
     const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
     if(countEl)countEl.textContent=snap.size+' прогнозів';
     if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів ще немає</div>';return;}
-    list.innerHTML=snap.docs.map(doc=>{const p=doc.data(),isMe=currentUser&&doc.id===currentUser.uid,time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';const chips=Object.entries(p.picks||{}).sort(([a],[b])=>parseInt(a.slice(4))-parseInt(b.slice(4))).map(([,team],i)=>`<span class="chip swc-team">${['🥇','🥈','🥉','4️⃣'][i]||''} ${escHtml(COUNTRY_FLAGS[team]||'')}${escHtml(team)}</span>`).join('');return`<div class="all-pred-card" style="${isMe?'border-color:rgba(10,132,255,.3);':''}"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${chips}</div></div>`;}).join('');
+    const teams=(SWC_ACTIVE_ROUND.teams||SWC_ACTIVE_ROUND.teamsBase||[]);
+    const em=['🥇','🥈','🥉','4️⃣'];
+    list.innerHTML=snap.docs.map(doc=>{
+      const p=doc.data(),isMe=currentUser&&doc.id===currentUser.uid;
+      const time=p.savedAt?.toDate?.()?.toLocaleString('uk-UA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})||'—';
+      const rankChips=teams.map((_,i)=>{const t=p.picks?.[`rank${i+1}`];return t?`<span class="chip swc-team">${em[i]||''} ${escHtml(COUNTRY_FLAGS[t]||'')}${escHtml(t)}</span>`:''}).join('');
+      const riderChips=teams.map(t=>{const r=p.picks?.[`topRider_${t}`];return r?`<span class="chip top8">⭐ ${escHtml(r)}</span>`:''}).join('');
+      const loserChip=p.picks?.loserTeam?`<span class="chip loser">💀 ${escHtml(COUNTRY_FLAGS[p.picks.loserTeam]||'')}${escHtml(p.picks.loserTeam)}</span>`:'';
+      return`<div class="all-pred-card" style="${isMe?'border-color:rgba(10,132,255,.3);':''}"><div class="all-pred-card-top"><span class="all-pred-nickname">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</span><span class="all-pred-time">${escHtml(time)}</span></div><div class="all-pred-chips">${rankChips}${riderChips}${loserChip}</div></div>`;
+    }).join('');
   } catch(e){list.innerHTML=`<div style="color:var(--red);padding:20px">Помилка: ${escHtml(e.message)}</div>`;}
 }
 
-async function swcRenderOfficialResults(){const R=SWC_ACTIVE_ROUND.results,g=document.getElementById('swcResultsGrid'),n=document.getElementById('swcNoResults');if(!g)return;if(!R){g.innerHTML='';if(n)n.style.display='';return;}if(n)n.style.display='none';const em=['🥇','🥈','🥉','4️⃣'];g.innerHTML=(R.ranking||[]).map((t,i)=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">${em[i]||i+1}</div><div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:${i===0?'var(--accent)':'var(--text)'}">${escHtml(COUNTRY_FLAGS[t]||'')} ${escHtml(t)}</div></div>`).join('');}
+async function swcRenderOfficialResults(){
+  const R=SWC_ACTIVE_ROUND.results,g=document.getElementById('swcResultsGrid'),n=document.getElementById('swcNoResults');
+  if(!g)return;
+  if(!R){g.innerHTML='';if(n)n.style.display='';return;}
+  if(n)n.style.display='none';
+  const em=['🥇','🥈','🥉','4️⃣'];
+  const rankCards=(R.ranking||[]).map((t,i)=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">${em[i]||i+1} Місце</div><div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:${i===0?'var(--accent)':'var(--text)'}">${escHtml(COUNTRY_FLAGS[t]||'')} ${escHtml(t)}</div></div>`).join('');
+  const riderCards=Object.entries(R.topRiders||{}).map(([team,rider])=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">⭐ ${escHtml(team)}</div><div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)">${escHtml(rider)}</div></div>`).join('');
+  const loserCard=R.loserTeam?`<div style="background:var(--surface);border:1px solid rgba(255,59,48,.25);border-radius:6px;padding:8px 10px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">💀 Невдаха</div><div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--red)">${escHtml(COUNTRY_FLAGS[R.loserTeam]||'')} ${escHtml(R.loserTeam)}</div></div>`:'';
+  g.innerHTML=`
+    <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:1px">ПОЗИЦІЇ КОМАНД</div>
+    ${rankCards}
+    <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:4px;letter-spacing:1px">ТОП ГОНЩИК КОМАНДИ</div>
+    ${riderCards}
+    <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:4px;letter-spacing:1px">КОМАНДА НЕВДАХА</div>
+    ${loserCard}`;
+}
 
 async function swcRenderLeaderboard(){const R=SWC_ACTIVE_ROUND.results,list=document.getElementById('swcLeaderboardList'),ce=document.getElementById('swcLbCount');if(!list)return;if(!R){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результати ще не опубліковано</div>';return;}try{const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').get();if(ce)ce.textContent=snap.size+' учасників';const scored=snap.docs.map(doc=>({uid:doc.id,...doc.data(),...swcCalcScore(doc.data().picks,R)})).sort((a,b)=>b.score-a.score);const em=['🥇','🥈','🥉'];let ps=null,rk=0,di=0;list.innerHTML=scored.map(p=>{di++;if(p.score!==ps){rk=di;ps=p.score;}const isMe=currentUser&&p.uid===currentUser.uid,rc=rk===1?'var(--accent)':rk===2?'#c0c0c0':rk===3?'#cd7f32':'var(--muted)';const chips=(p.details||[]).map(d=>`<span class="lb-chip ${d.pts>0?'has-pts':''}">${escHtml(d.label)}: ${d.pts}</span>`).join('');return`<div class="lb-row ${rk<=3?'rank-'+rk:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rc}">${rk<=3?em[rk-1]:rk+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score" style="color:#60b5ff">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;}).join('');}catch(e){list.innerHTML=`<div style="color:var(--red);padding:20px">Помилка: ${escHtml(e.message)}</div>`;}}
 
@@ -1979,13 +2147,37 @@ function adminSwcResRenderForm(r) {
   const form = document.getElementById('adminSwcResForm');
   if (!form) return;
   const opts = teams.map(t => `<option value="${escHtml(t)}">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</option>`).join('');
-  form.innerHTML = teams.map((_, i) => `
+
+  // Section 1: ranking
+  const rankRows = teams.map((_,i) => `
     <div style="display:flex;align-items:center;gap:10px">
       <div style="font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--muted);width:28px;text-align:right">${i+1}.</div>
       <select class="rider-select" id="adminSwcResRank${i+1}" style="flex:1">
         <option value="">— команда —</option>${opts}
       </select>
     </div>`).join('');
+
+  // Section 2: top rider per team
+  const riderRows = teams.map(t => {
+    const td = SWC_TEAMS[t]||{riders:[]};
+    const rOpts = td.riders.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center">
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text)">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</div>
+      <select class="rider-select" id="adminSwcTopRider_${escHtml(t)}">
+        <option value="">— гонщик —</option>${rOpts}
+      </select>
+    </div>`;
+  }).join('');
+
+  form.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:1px">КАТ. 1 — ПОЗИЦІЇ КОМАНД</div>
+    ${rankRows}
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin:14px 0 6px;letter-spacing:1px">КАТ. 2 — ТОП ГОНЩИК КОМАНДИ</div>
+    ${riderRows}
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin:14px 0 6px;letter-spacing:1px">КАТ. 3 — КОМАНДА НЕВДАХА</div>
+    <select class="rider-select" id="adminSwcLoserTeam" style="max-width:280px">
+      <option value="">— команда —</option>${opts}
+    </select>`;
 
   // Qualified dropdown (for semi-finals only)
   const qualWrap = document.getElementById('adminSwcQualifiedWrap');
@@ -1997,11 +2189,11 @@ function adminSwcResRenderForm(r) {
     qualWrap.style.display = 'none';
   }
 
-  // Add mutual exclusion listeners
-  const sels = Array.from(form.querySelectorAll('select'));
-  sels.forEach(s => s.addEventListener('change', () => {
-    sels.forEach(s2 => {
-      const taken = new Set(sels.filter(x=>x!==s2&&x.value).map(x=>x.value));
+  // Mutual exclusion for ranking selects
+  const rankSels = Array.from(form.querySelectorAll('select[id^="adminSwcResRank"]'));
+  rankSels.forEach(s => s.addEventListener('change', () => {
+    rankSels.forEach(s2 => {
+      const taken = new Set(rankSels.filter(x=>x!==s2&&x.value).map(x=>x.value));
       Array.from(s2.options).forEach(o => { if(o.value) o.disabled = taken.has(o.value); });
     });
   }));
@@ -2011,10 +2203,20 @@ function adminLoadSwcResult() {
   const r = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
   if (!r || !r.results) return;
   const res = r.results;
+  // Cat1: ranking
   (res.ranking || []).forEach((team, i) => {
     const el = document.getElementById(`adminSwcResRank${i+1}`);
     if (el) el.value = team;
   });
+  // Cat2: top riders
+  Object.entries(res.topRiders||{}).forEach(([team, rider]) => {
+    const el = document.getElementById(`adminSwcTopRider_${team}`);
+    if (el) el.value = rider;
+  });
+  // Cat3: loser team
+  const lt = document.getElementById('adminSwcLoserTeam');
+  if (lt && res.loserTeam) lt.value = res.loserTeam;
+  // Qualified
   const qualSel = document.getElementById('adminSwcQualified');
   if (qualSel && res.qualified) qualSel.value = res.qualified;
   adminSetSwcResStatus('');
@@ -2025,16 +2227,30 @@ async function adminSaveSwcResult() {
   const r = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
   if (!r) return;
   const teams = r.teams || r.teamsBase || [];
+
+  // Cat1: ranking
   const ranking = [];
   for (let i = 1; i <= teams.length; i++) {
     const val = document.getElementById(`adminSwcResRank${i}`)?.value;
     if (!val) { showToast(`⚠️ Оберіть команду для ${i}-го місця`,'error'); return; }
     ranking.push(val);
   }
-  if (new Set(ranking).size !== ranking.length) { showToast('⚠️ Кожна команда може бути тільки раз','error'); return; }
+  if (new Set(ranking).size !== ranking.length) { showToast('⚠️ Кожна команда може бути лише раз','error'); return; }
+
+  // Cat2: top riders
+  const topRiders = {};
+  for (const t of teams) {
+    const val = document.getElementById(`adminSwcTopRider_${t}`)?.value;
+    if (!val) { showToast(`⚠️ Оберіть топ гонщика для ${t}`,'error'); return; }
+    topRiders[t] = val;
+  }
+
+  // Cat3: loser team
+  const loserTeam = document.getElementById('adminSwcLoserTeam')?.value;
+  if (!loserTeam) { showToast('⚠️ Оберіть команду невдаху','error'); return; }
 
   const qualified = document.getElementById('adminSwcQualified')?.value || null;
-  const results = { ranking, ...(qualified ? {qualified} : {}) };
+  const results = { ranking, topRiders, loserTeam, ...(qualified ? {qualified} : {}) };
 
   adminSetSwcResStatus('Збереження...');
   try {
