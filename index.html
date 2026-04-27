@@ -544,6 +544,7 @@
     <div class="admin-nav">
       <button class="admin-nav-btn active" onclick="showAdminSection('adminSgp')">⚡ SGP Гонщики</button>
       <button class="admin-nav-btn" onclick="showAdminSection('adminSwc')">🌍 SWC Команди</button>
+      <button class="admin-nav-btn" onclick="showAdminSection('adminResults')">🏁 Результати</button>
     </div>
 
     <!-- SGP RIDERS EDITOR -->
@@ -626,6 +627,87 @@
           <div style="display:flex;gap:8px">
             <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadSwcTeam()">↺ Скасувати</button>
             <button class="btn-admin" onclick="adminSaveSwcTeam()">💾 Зберегти</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS EDITOR -->
+    <div class="admin-section" id="adminResults">
+      <div class="admin-info-box">
+        <strong>Результати гонки</strong><br>
+        Після завершення гонки внеси офіційні результати тут. SGP зберігаються у <code>config/sgp_results</code>, SWC — у <code>config/swc_results</code>. Результати одразу застосовуються до таблиць і рахунку балів.
+      </div>
+
+      <!-- SGP Results -->
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--admin);margin-bottom:12px">SGP — результат раунду</div>
+
+      <div id="adminResRoundSelector" class="admin-round-selector" style="border-color:var(--admin-border)"></div>
+
+      <div class="admin-card" id="adminResCard">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="adminResCardTitle">Раунд не обрано</div>
+            <div class="admin-card-meta" id="adminResCardMeta"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="adminResCurrentStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"></span>
+            <button style="padding:6px 12px;font-size:11px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer" onclick="adminClearSgpResult()">✕ Очистити результат</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="adminResFormGrid">
+          <!-- динамічно рендериться -->
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">НЕВДАХА ДНЯ (16-те місце)</div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <select id="adminResLoser" class="rider-select" style="flex:1;max-width:260px"><option value="">— оберіть —</option></select>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="adminResLoserIncident" style="width:14px;height:14px;accent-color:var(--admin)"> + інцидент (+1 бал)
+            </label>
+          </div>
+        </div>
+
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="adminResStatus"></span>
+          <div style="display:flex;gap:8px">
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadSgpResult()">↺ Скасувати</button>
+            <button class="btn-admin" onclick="adminSaveSgpResult()">💾 Зберегти результат SGP</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:24px 0"></div>
+
+      <!-- SWC Results -->
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#60b5ff;margin-bottom:12px">SWC — результат раунду</div>
+
+      <div class="admin-tabs-secondary" id="adminSwcResRoundTabs"></div>
+
+      <div class="admin-card" style="border-color:rgba(10,132,255,.3)">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="adminSwcResTitle">Раунд не обрано</div>
+            <div class="admin-card-meta" id="adminSwcResMeta"></div>
+          </div>
+          <button style="padding:6px 12px;font-size:11px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer" onclick="adminClearSwcResult()">✕ Очистити результат</button>
+        </div>
+
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px">ФІНАЛЬНА РОЗСТАНОВКА КОМАНД (1-ше → останнє місце)</div>
+        <div id="adminSwcResForm" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+
+        <div id="adminSwcQualifiedWrap" style="display:none;margin-bottom:14px">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">КОМАНДА ЩО КВАЛІФІКУВАЛАСЬ У ФІНАЛ</div>
+          <select id="adminSwcQualified" class="rider-select" style="max-width:280px"><option value="">— оберіть —</option></select>
+        </div>
+
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="adminSwcResStatus"></span>
+          <div style="display:flex;gap:8px">
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadSwcResult()">↺ Скасувати</button>
+            <button style="padding:10px 20px;font-size:13px;border-radius:8px;border:none;background:#0a84ff;color:#fff;cursor:pointer;font-family:var(--font-head);font-weight:700;letter-spacing:1px" onclick="adminSaveSwcResult()">💾 Зберегти результат SWC</button>
           </div>
         </div>
       </div>
@@ -948,12 +1030,44 @@ async function loadSwcTeamsConfig() {
   } catch(e) { console.warn('loadSwcTeamsConfig:', e.message); }
 }
 
+async function loadSgpResultsConfig() {
+  try {
+    const snap = await db.collection('config').doc('sgp_results').get();
+    if (snap.exists) {
+      const data = snap.data();
+      SEASON.rounds.forEach(r => {
+        // null means explicitly cleared, object means saved result
+        if (data.hasOwnProperty(r.id)) {
+          r.results = data[r.id] || null;
+        }
+      });
+    }
+  } catch(e) { console.warn('loadSgpResultsConfig:', e.message); }
+}
+
+async function loadSwcResultsConfig() {
+  try {
+    const snap = await db.collection('config').doc('swc_results').get();
+    if (snap.exists) {
+      const data = snap.data();
+      SWC_SEASON.rounds.forEach(r => {
+        if (data.hasOwnProperty(r.id)) {
+          r.results = data[r.id] || null;
+        }
+      });
+    }
+  } catch(e) { console.warn('loadSwcResultsConfig:', e.message); }
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  APP ENTRY
 // ═══════════════════════════════════════════════════════════════
 async function enterApp() {
   // Завантажуємо кастомні конфіги з Firestore перед рендером
-  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig()]);
+  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig(), loadSgpResultsConfig(), loadSwcResultsConfig()]);
+
+  // Перераховуємо ACTIVE_ROUND після завантаження результатів
+  ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
 
   // Визначаємо адмін
   isAdmin = !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
@@ -1443,11 +1557,337 @@ function adminInit() {
   if (firstTeam) adminSelectSwcTeam(firstTeam);
 }
 
+// ── Results section state ──
+let adminResRoundId = null;
+let adminSwcResRoundId = null;
+
+function adminResultsInit() {
+  adminResRenderRoundSelector();
+  adminSwcResRenderRoundTabs();
+  // Select first round without existing results by default, fallback to r01
+  const firstPending = SEASON.rounds.find(r => !r.results) || SEASON.rounds[0];
+  adminResSelectRound(firstPending.id);
+  adminSwcResSelectRound(SWC_SEASON.rounds[0].id);
+}
+
+// ─── SGP Results editor ───────────────────────────────────────
+function adminResRenderRoundSelector() {
+  const wrap = document.getElementById('adminResRoundSelector');
+  if (!wrap) return;
+  wrap.innerHTML = SEASON.rounds.map(r => {
+    const d = new Date(r.date), ds = d.toLocaleDateString('uk-UA',{day:'2-digit',month:'short'});
+    const isActive = r.id === adminResRoundId;
+    const hasDone = !!r.results;
+    return `<button class="round-pill ${isActive?'active':''} ${hasDone?'done':''}" onclick="adminResSelectRound('${r.id}')">${hasDone?'✓ ':''}${ds}<br><span>${escHtml(r.city.split(',')[0])}</span></button>`;
+  }).join('');
+}
+
+function adminResSelectRound(id) {
+  adminResRoundId = id;
+  adminResRenderRoundSelector();
+  const r = SEASON.rounds.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('adminResCardTitle').textContent = r.name;
+  document.getElementById('adminResCardMeta').textContent = r.city + ' · ' + new Date(r.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+  // Render rider selects for this round
+  adminResRenderForm(r);
+  adminLoadSgpResult();
+  adminSetResStatus('');
+}
+
+function adminResRenderForm(r) {
+  const riders = r.riders || SGP_ALL_RIDERS;
+  const opts = '<option value="">— оберіть —</option>' + riders.map(x => `<option value="${escHtml(x)}">${escHtml(x)}</option>`).join('');
+
+  // Top2 (2 selects), Top8 positions 3-8 (6 selects), Podium (3 selects), Winner (1 select) = 12 selects
+  document.getElementById('adminResFormGrid').innerHTML = `
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🏆 ФІНАЛІСТ 1 (Топ 2)</div>
+      <select class="rider-select" id="aRes_top2_1">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🏆 ФІНАЛІСТ 2 (Топ 2)</div>
+      <select class="rider-select" id="aRes_top2_2">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">3-тє місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_3">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">4-те місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_4">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">5-те місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_5">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">6-те місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_6">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">7-ме місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_7">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">8-ме місце (Топ 8)</div>
+      <select class="rider-select" id="aRes_top8_8">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🥇 1-ше (Подіум)</div>
+      <select class="rider-select" id="aRes_podium1">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🥈 2-ге (Подіум)</div>
+      <select class="rider-select" id="aRes_podium2">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🥉 3-тє (Подіум)</div>
+      <select class="rider-select" id="aRes_podium3">${opts}</select>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">🎯 ПЕРЕМОЖЕЦЬ</div>
+      <select class="rider-select" id="aRes_winner">${opts}</select>
+    </div>`;
+
+  // Loser select
+  const loserEl = document.getElementById('adminResLoser');
+  if (loserEl) loserEl.innerHTML = opts;
+}
+
+function adminLoadSgpResult() {
+  const r = SEASON.rounds.find(x => x.id === adminResRoundId);
+  if (!r) return;
+  const res = r.results;
+  const statusEl = document.getElementById('adminResCurrentStatus');
+
+  if (res) {
+    statusEl.textContent = '✓ Результат є';
+    statusEl.style.color = 'var(--green)';
+    // Populate fields
+    const safe = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
+    safe('aRes_top2_1',   res.top2?.[0]);
+    safe('aRes_top2_2',   res.top2?.[1]);
+    safe('aRes_top8_3',   res.top8?.[2]);
+    safe('aRes_top8_4',   res.top8?.[3]);
+    safe('aRes_top8_5',   res.top8?.[4]);
+    safe('aRes_top8_6',   res.top8?.[5]);
+    safe('aRes_top8_7',   res.top8?.[6]);
+    safe('aRes_top8_8',   res.top8?.[7]);
+    safe('aRes_podium1',  res.podium?.[0]);
+    safe('aRes_podium2',  res.podium?.[1]);
+    safe('aRes_podium3',  res.podium?.[2]);
+    safe('aRes_winner',   res.winner);
+    safe('adminResLoser', res.loser);
+    const inc = document.getElementById('adminResLoserIncident');
+    if (inc) inc.checked = !!res.loserIncident;
+  } else {
+    statusEl.textContent = 'Результату немає';
+    statusEl.style.color = '';
+    // Clear all
+    ['aRes_top2_1','aRes_top2_2','aRes_top8_3','aRes_top8_4','aRes_top8_5','aRes_top8_6',
+     'aRes_top8_7','aRes_top8_8','aRes_podium1','aRes_podium2','aRes_podium3','aRes_winner','adminResLoser'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    const inc = document.getElementById('adminResLoserIncident');
+    if (inc) inc.checked = false;
+  }
+  adminSetResStatus('');
+}
+
+async function adminSaveSgpResult() {
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const top2_1 = g('aRes_top2_1'), top2_2 = g('aRes_top2_2');
+  const p3=g('aRes_top8_3'),p4=g('aRes_top8_4'),p5=g('aRes_top8_5'),p6=g('aRes_top8_6'),p7=g('aRes_top8_7'),p8=g('aRes_top8_8');
+  const pod1=g('aRes_podium1'),pod2=g('aRes_podium2'),pod3=g('aRes_podium3');
+  const winner=g('aRes_winner'),loser=g('adminResLoser');
+  const loserIncident = document.getElementById('adminResLoserIncident')?.checked || false;
+
+  if (!top2_1||!top2_2) { showToast('⚠️ Вкажіть обох фіналістів Топ 2','error'); return; }
+  if (!p3||!p4||!p5||!p6||!p7||!p8) { showToast('⚠️ Заповніть всі місця Топ 8 (3-8)','error'); return; }
+  if (!pod1||!pod2||!pod3) { showToast('⚠️ Заповніть подіум','error'); return; }
+  if (!winner) { showToast('⚠️ Вкажіть переможця','error'); return; }
+  if (!loser) { showToast('⚠️ Вкажіть невдаху дня','error'); return; }
+
+  const results = {
+    top2: [top2_1, top2_2],
+    top8: [top2_1, top2_2, p3, p4, p5, p6, p7, p8],
+    podium: [pod1, pod2, pod3],
+    winner,
+    loser,
+    loserIncident
+  };
+
+  adminSetResStatus('Збереження...');
+  try {
+    // Save to Firestore
+    await db.collection('config').doc('sgp_results').set({ [adminResRoundId]: results }, { merge: true });
+    // Update in-memory SEASON
+    const r = SEASON.rounds.find(x => x.id === adminResRoundId);
+    if (r) r.results = results;
+    // Update ACTIVE_ROUND
+    ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
+    adminSetResStatus('✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'), true);
+    showToast('✓ Результат SGP збережено!', 'success');
+    adminResRenderRoundSelector();
+    // Refresh leaderboard/results display if currently shown
+    renderRoundSelector();
+  } catch(e) {
+    adminSetResStatus('❌ Помилка: '+e.message, false, true);
+    showToast('❌ '+e.message,'error');
+  }
+}
+
+async function adminClearSgpResult() {
+  if (!isAdmin) return;
+  if (!confirm('Видалити результат цього раунду? Всі бали будуть перераховані.')) return;
+  try {
+    await db.collection('config').doc('sgp_results').set({ [adminResRoundId]: null }, { merge: true });
+    const r = SEASON.rounds.find(x => x.id === adminResRoundId);
+    if (r) r.results = null;
+    ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
+    adminLoadSgpResult();
+    adminResRenderRoundSelector();
+    renderRoundSelector();
+    showToast('Результат видалено', 'success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+function adminSetResStatus(msg, ok=false, err=false) {
+  const el = document.getElementById('adminResStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'admin-status-msg'+(ok?' ok':err?' err':'');
+}
+
+// ─── SWC Results editor ───────────────────────────────────────
+function adminSwcResRenderRoundTabs() {
+  const wrap = document.getElementById('adminSwcResRoundTabs');
+  if (!wrap) return;
+  wrap.innerHTML = SWC_SEASON.rounds.map(r => {
+    const isActive = r.id === adminSwcResRoundId;
+    const done = !!r.results;
+    return `<button class="admin-tab-s ${isActive?'active':''}" onclick="adminSwcResSelectRound('${r.id}')">${done?'✓ ':''}${escHtml(r.name)}</button>`;
+  }).join('');
+}
+
+function adminSwcResSelectRound(id) {
+  adminSwcResRoundId = id;
+  adminSwcResRenderRoundTabs();
+  const r = SWC_SEASON.rounds.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('adminSwcResTitle').textContent = r.name;
+  document.getElementById('adminSwcResMeta').textContent = r.city + ' · ' + new Date(r.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+  adminSwcResRenderForm(r);
+  adminLoadSwcResult();
+  adminSetSwcResStatus('');
+}
+
+function adminSwcResRenderForm(r) {
+  const teams = r.teams || r.teamsBase || [];
+  const form = document.getElementById('adminSwcResForm');
+  if (!form) return;
+  const opts = teams.map(t => `<option value="${escHtml(t)}">${escHtml(COUNTRY_FLAGS[t]||'🏴')} ${escHtml(t)}</option>`).join('');
+  form.innerHTML = teams.map((_, i) => `
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--muted);width:28px;text-align:right">${i+1}.</div>
+      <select class="rider-select" id="adminSwcResRank${i+1}" style="flex:1">
+        <option value="">— команда —</option>${opts}
+      </select>
+    </div>`).join('');
+
+  // Qualified dropdown (for semi-finals only)
+  const qualWrap = document.getElementById('adminSwcQualifiedWrap');
+  const qualSel = document.getElementById('adminSwcQualified');
+  if (r.format === 'semi-final') {
+    qualWrap.style.display = '';
+    qualSel.innerHTML = '<option value="">— оберіть —</option>' + opts;
+  } else {
+    qualWrap.style.display = 'none';
+  }
+
+  // Add mutual exclusion listeners
+  const sels = Array.from(form.querySelectorAll('select'));
+  sels.forEach(s => s.addEventListener('change', () => {
+    sels.forEach(s2 => {
+      const taken = new Set(sels.filter(x=>x!==s2&&x.value).map(x=>x.value));
+      Array.from(s2.options).forEach(o => { if(o.value) o.disabled = taken.has(o.value); });
+    });
+  }));
+}
+
+function adminLoadSwcResult() {
+  const r = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
+  if (!r || !r.results) return;
+  const res = r.results;
+  (res.ranking || []).forEach((team, i) => {
+    const el = document.getElementById(`adminSwcResRank${i+1}`);
+    if (el) el.value = team;
+  });
+  const qualSel = document.getElementById('adminSwcQualified');
+  if (qualSel && res.qualified) qualSel.value = res.qualified;
+  adminSetSwcResStatus('');
+}
+
+async function adminSaveSwcResult() {
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  const r = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
+  if (!r) return;
+  const teams = r.teams || r.teamsBase || [];
+  const ranking = [];
+  for (let i = 1; i <= teams.length; i++) {
+    const val = document.getElementById(`adminSwcResRank${i}`)?.value;
+    if (!val) { showToast(`⚠️ Оберіть команду для ${i}-го місця`,'error'); return; }
+    ranking.push(val);
+  }
+  if (new Set(ranking).size !== ranking.length) { showToast('⚠️ Кожна команда може бути тільки раз','error'); return; }
+
+  const qualified = document.getElementById('adminSwcQualified')?.value || null;
+  const results = { ranking, ...(qualified ? {qualified} : {}) };
+
+  adminSetSwcResStatus('Збереження...');
+  try {
+    await db.collection('config').doc('swc_results').set({ [adminSwcResRoundId]: results }, { merge: true });
+    const round = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
+    if (round) round.results = results;
+    adminSetSwcResStatus('✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'), true);
+    showToast('✓ Результат SWC збережено!', 'success');
+    adminSwcResRenderRoundTabs();
+  } catch(e) {
+    adminSetSwcResStatus('❌ Помилка: '+e.message, false, true);
+    showToast('❌ '+e.message,'error');
+  }
+}
+
+async function adminClearSwcResult() {
+  if (!isAdmin) return;
+  if (!confirm('Видалити результат цього раунду SWC?')) return;
+  try {
+    await db.collection('config').doc('swc_results').set({ [adminSwcResRoundId]: null }, { merge: true });
+    const r = SWC_SEASON.rounds.find(x => x.id === adminSwcResRoundId);
+    if (r) r.results = null;
+    adminSwcResRenderRoundTabs();
+    const form = document.getElementById('adminSwcResForm');
+    if (form) form.querySelectorAll('select').forEach(s => s.value = '');
+    showToast('Результат видалено', 'success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+function adminSetSwcResStatus(msg, ok=false, err=false) {
+  const el = document.getElementById('adminSwcResStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'admin-status-msg'+(ok?' ok':err?' err':'');
+}
+
 function showAdminSection(id) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.admin-nav-btn')[id === 'adminSgp' ? 0 : 1].classList.add('active');
+  const idx = {adminSgp:0, adminSwc:1, adminResults:2}[id] || 0;
+  document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
+  if (id === 'adminResults') adminResultsInit();
 }
 
 // ── SGP round selector ──
