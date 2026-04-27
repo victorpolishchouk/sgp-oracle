@@ -20,10 +20,17 @@
       --green:#30d158;--blue:#0a84ff;--muted:#5a5a68;--text:#e8e8f0;--text2:#9898a8;
       --font-head:'Barlow Condensed',sans-serif;--font-body:'Barlow',sans-serif;
       --font-mono:'JetBrains Mono',monospace;--radius:10px;
+      --grid-line:rgba(212,240,0,.025);
+    }
+    :root[data-theme="light"] {
+      --bg:#f0f0f2;--surface:#e4e4e8;--card:#ffffff;--border:#d0d0d8;
+      --accent:#8aac00;--accent2:#c08a00;--red:#d93025;--orange:#e67700;
+      --green:#1a8c3a;--blue:#0060cc;--muted:#8888a0;--text:#14141c;--text2:#44445a;
+      --grid-line:rgba(100,120,0,.06);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(212,240,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(212,240,0,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
     .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 20px 80px}
 
     header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;flex-wrap:wrap;gap:12px}
@@ -202,8 +209,42 @@
     footer a{color:var(--text2);text-decoration:none}
     footer a:hover{color:var(--text)}
 
-    /* ═══ ADMIN PANEL ═══ */
+    /* ═══ THEME TOGGLE ═══ */
+    .theme-toggle {
+      display:flex;align-items:center;justify-content:center;
+      width:36px;height:36px;border-radius:50%;
+      background:var(--surface);border:1px solid var(--border);
+      cursor:pointer;transition:all .2s;flex-shrink:0;
+      font-size:16px;line-height:1;
+    }
+    .theme-toggle:hover{border-color:var(--accent);transform:rotate(20deg) scale(1.08);}
+    :root[data-theme="light"] .theme-toggle:hover{transform:rotate(-20deg) scale(1.08);}
+
+    /* Light mode overrides for elements that need explicit fixes */
+    :root[data-theme="light"] .loading-overlay{background:var(--bg)}
+    :root[data-theme="light"] .spinner{border-color:var(--border);border-top-color:var(--accent2)}
+    :root[data-theme="light"] .field input,
+    :root[data-theme="light"] .rider-select{color:var(--text)}
+    :root[data-theme="light"] .field input::placeholder{color:var(--muted)}
+    :root[data-theme="light"] .toast{background:var(--card);color:var(--text)}
+    :root[data-theme="light"] .admin-bulk-textarea{color:var(--text)}
+
+    /* ─── Smooth theme transition ─── */
+    *, *::before, *::after {
+      transition: background-color .25s ease, border-color .25s ease, color .15s ease;
+    }
+    /* Exceptions: don't animate transforms/shadows with transition shorthand */
+    .btn-primary, .theme-toggle, .round-pill, .comp-btn, .nav-tab,
+    .admin-nav-btn, .lb-row, .all-pred-card, .team-card,
+    .spinner, .toast {
+      transition: background-color .25s ease, border-color .25s ease,
+                  color .15s ease, transform .15s ease, box-shadow .15s ease,
+                  opacity .15s ease;
+    }
+
+    /* ═══ ADMIN PANEL (moved here so it's after :root vars) ═══ */
     :root { --admin:#9b59b6; --admin-light:rgba(155,89,182,.12); --admin-border:rgba(155,89,182,.35); }
+    :root[data-theme="light"] { --admin:#7b3fa6; --admin-light:rgba(155,89,182,.08); --admin-border:rgba(155,89,182,.3); }
     .comp-btn.active-admin{background:var(--admin);color:#fff}
     .user-pill .dot.admin{background:var(--admin)}
     #screenAdmin{display:none}
@@ -250,8 +291,7 @@
     .swc-team-editor{background:var(--card);border:1px solid var(--admin-border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
     .swc-team-editor-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
     .swc-team-flag{font-size:20px}
-    .swc-team-editor-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
-  </style>
+    .swc-team-editor-name{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}</style>
 </head>
 <body>
 
@@ -277,6 +317,7 @@
       <span id="userNickname">—</span>
       <button onclick="logout()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 4px" title="Вийти">✕</button>
     </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Перемикач теми" aria-label="Перемикач теми">🌙</button>
   </header>
 
   <div class="race-banner checking" id="raceBanner">
@@ -1515,9 +1556,31 @@ function showSwcTab(id){['swcTabPred','swcTabAll','swcTabResults','swcTabSeason'
 async function swcRenderSeasonStandings(){const list=document.getElementById('swcSeasonList'),ce=document.getElementById('swcSeasonCount');if(!list)return;const comp=SWC_SEASON.rounds.filter(r=>r.results);if(ce)ce.textContent=`${comp.length} / ${SWC_SEASON.rounds.length} раундів`;if(!comp.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Результатів ще немає</div>';return;}const um={};for(const r of comp){const s=await db.collection('swc_predictions').doc(r.id).collection('users').get();s.docs.forEach(doc=>{const p=doc.data();if(!um[doc.id])um[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,cnt:0};const{score}=swcCalcScore(p.picks,r.results);um[doc.id].rounds[r.id]=score;um[doc.id].total+=score;um[doc.id].cnt++;});}const users=Object.values(um).sort((a,b)=>b.total-a.total);if(!users.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Немає даних</div>';return;}const em=['🥇','🥈','🥉'];let pt=null,rk=0,di=0;list.innerHTML=users.map(u=>{di++;if(u.total!==pt){rk=di;pt=u.total;}const isMe=currentUser&&u.uid===currentUser.uid,rc=rk===1?'var(--accent)':rk===2?'#c0c0c0':rk===3?'#cd7f32':'var(--muted)';const cells=comp.map(r=>{const sc=u.rounds[r.id];return`<div style="text-align:center;min-width:40px"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${escHtml(r.name.replace('Semi-Final ','SF').replace('Final','F'))}</div><div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:${sc!==undefined?'var(--text)':'var(--muted)'}">${sc!==undefined?sc:'—'}</div></div>`;}).join('');return`<div class="lb-row ${rk<=3?'rank-'+rk:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rc}">${rk<=3?em[rk-1]:rk+'.'}</div><div class="lb-info" style="flex:1"><div class="lb-nick">${escHtml(u.nickname)}${isMe?' <span style="font-size:11px;color:#60b5ff;font-family:var(--font-mono)">(ти)</span>':''}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${cells}</div></div><div style="text-align:right"><div class="lb-score" style="color:#60b5ff">${u.total}</div><div class="lb-score-lbl">${u.cnt} р.</div></div></div>`;}).join('');}
 
 // ═══════════════════════════════════════════════════════════════
-//  BOOT
+//  THEME TOGGLE
 // ═══════════════════════════════════════════════════════════════
-setInterval(()=>{ localStorage.removeItem('sgp_race_checked_'+ACTIVE_ROUND.id); checkRaceStatus(); },3*60*1000);
+(function initTheme() {
+  const saved = localStorage.getItem('sgp_theme') || 'dark';
+  applyTheme(saved, false);
+})();
+
+function applyTheme(theme, save = true) {
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  if (theme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    if (btn) btn.textContent = '☀️';
+  } else {
+    root.removeAttribute('data-theme');
+    if (btn) btn.textContent = '🌙';
+  }
+  if (save) localStorage.setItem('sgp_theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
 
 
 
