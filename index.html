@@ -12,6 +12,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- SheetJS для експорту в Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -480,8 +482,14 @@
     <!-- ALL PREDICTIONS -->
     <div id="tabAllPreds" style="display:none">
       <div class="all-header">
-        <div class="section-title" style="margin-bottom:0">Прогнози учасників</div>
-        <span class="count-badge" id="allCount">0 прогнозів</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="section-title" style="margin-bottom:0">Прогнози учасників</div>
+          <span id="adminAllPredsLabel" style="display:none;font-family:var(--font-mono);font-size:10px;background:var(--admin-light);border:1px solid var(--admin-border);border-radius:4px;padding:2px 8px;color:var(--admin)">👑 АДМІН-ПЕРЕГЛЯД</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="count-badge" id="allCount">0 прогнозів</span>
+          <button id="btnExportSgp" onclick="exportSgpPredictions()" style="display:none;font-family:var(--font-head);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:6px;border:1px solid var(--admin-border);background:var(--admin-light);color:var(--admin);cursor:pointer;white-space:nowrap;transition:all .15s">📥 Excel</button>
+        </div>
       </div>
       <div id="allPredsList"></div>
     </div>
@@ -552,7 +560,16 @@
         </div>
       </div>
       <div id="swcTabAll" style="display:none">
-        <div class="all-header"><div class="section-title" style="margin-bottom:0">Прогнози</div><span class="count-badge" id="swcAllCount">0</span></div>
+        <div class="all-header">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="section-title" style="margin-bottom:0">Прогнози</div>
+            <span id="adminSwcAllPredsLabel" style="display:none;font-family:var(--font-mono);font-size:10px;background:var(--admin-light);border:1px solid var(--admin-border);border-radius:4px;padding:2px 8px;color:var(--admin)">👑 АДМІН-ПЕРЕГЛЯД</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="count-badge" id="swcAllCount">0</span>
+            <button id="btnExportSwc" onclick="exportSwcPredictions()" style="display:none;font-family:var(--font-head);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:6px;border:1px solid var(--admin-border);background:var(--admin-light);color:var(--admin);cursor:pointer;white-space:nowrap;transition:all .15s">📥 Excel</button>
+          </div>
+        </div>
         <div id="swcAllPredsList"></div>
       </div>
       <div id="swcTabResults" style="display:none">
@@ -1320,12 +1337,19 @@ async function renderAllPredictions() {
   const countEl=document.getElementById('allCount');
   if(!list)return;
 
+  // Адмін завжди бачить всі прогнози — показуємо кнопку export та лейбл
+  const exportBtn = document.getElementById('btnExportSgp');
+  const adminLabel = document.getElementById('adminAllPredsLabel');
+  if (exportBtn) exportBtn.style.display = isAdmin ? '' : 'none';
+  if (adminLabel) adminLabel.style.display = isAdmin ? '' : 'none';
+
   // Визначаємо чи гонка заблокована для цього раунду
   const _start=new Date(ACTIVE_ROUND.startDatetime);
   const _isLocked = raceLocked || !!ACTIVE_ROUND.results || Date.now()>=_start.getTime();
 
   // До старту — показуємо тільки кількість учасників та свій прогноз
-  if(!_isLocked){
+  // (адмін цю перевірку пропускає і бачить всі прогнози завжди)
+  if(!_isLocked && !isAdmin){
     list.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:12px"><span class="spinner"></span></div>';
     try {
       const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').get();
@@ -1511,7 +1535,8 @@ function _updateAllPredsTabLabel(){
   const btns=document.querySelectorAll('#screenMain>.nav-tabs .nav-tab');
   btns.forEach(btn=>{
     const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-    if(t==='tabAllPreds') btn.textContent = _isLocked ? 'Всі прогнози' : '🔒 Прогнози';
+    // Адмін завжди бачить звичайну назву табу (не "🔒 Прогнози")
+    if(t==='tabAllPreds') btn.textContent = (_isLocked || isAdmin) ? 'Всі прогнози' : '🔒 Прогнози';
   });
 }
 
@@ -1763,11 +1788,17 @@ function swcCalcScore(picks,results){
 async function swcRenderAllPredictions(){
   const list=document.getElementById('swcAllPredsList'),countEl=document.getElementById('swcAllCount');if(!list)return;
 
+  // Адмін завжди бачить всі прогнози SWC
+  const exportBtn = document.getElementById('btnExportSwc');
+  const adminLabel = document.getElementById('adminSwcAllPredsLabel');
+  if (exportBtn) exportBtn.style.display = isAdmin ? '' : 'none';
+  if (adminLabel) adminLabel.style.display = isAdmin ? '' : 'none';
+
   // Визначаємо чи SWC-раунд заблокований
   const _swcStart=new Date(SWC_ACTIVE_ROUND.startDatetime);
   const _swcLocked = swcRaceLocked || !!SWC_ACTIVE_ROUND.results || Date.now()>=_swcStart.getTime();
 
-  if(!_swcLocked){
+  if(!_swcLocked && !isAdmin){
     list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></div>';
     try {
       const snap=await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').get();
@@ -2539,6 +2570,118 @@ function adminSetSwcStatus(msg, ok=false, err=false) {
   if (!el) return;
   el.textContent = msg;
   el.className = 'admin-status-msg'+(ok?' ok':err?' err':'');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EXPORT TO EXCEL (admin only)
+// ═══════════════════════════════════════════════════════════════
+async function exportSgpPredictions() {
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  if (typeof XLSX === 'undefined') { showToast('⚠️ SheetJS не завантажено','error'); return; }
+  showToast('⏳ Формуємо файл...', '');
+  try {
+    const snap = await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
+    if (snap.empty) { showToast('⚠️ Прогнозів немає', ''); return; }
+    const rows = snap.docs.map(doc => {
+      const p = doc.data();
+      const savedAt = p.savedAt?.toDate?.()?.toLocaleString('uk-UA') || '—';
+      const row = {
+        'Нікнейм':     p.nickname || '—',
+        'Email':        p.email || '—',
+        'Збережено':    savedAt,
+        'Фіналіст 1':   p.top2_1  || '',
+        'Фіналіст 2':   p.top2_2  || '',
+        'Топ8 слот 3':  p.top8_1  || '',
+        'Топ8 слот 4':  p.top8_2  || '',
+        'Топ8 слот 5':  p.top8_3  || '',
+        'Топ8 слот 6':  p.top8_4  || '',
+        'Топ8 слот 7':  p.top8_5  || '',
+        'Топ8 слот 8':  p.top8_6  || '',
+        'Невдаха дня':  p.loser   || '',
+        'Подіум 1':     p.podium1 || '',
+        'Подіум 2':     p.podium2 || '',
+        'Подіум 3':     p.podium3 || '',
+        'Переможець':   p.winner  || '',
+      };
+      if (ACTIVE_ROUND.results) {
+        const {score, breakdown} = calcScore(p, ACTIVE_ROUND.results);
+        row['Бали'] = score;
+        row['Топ2 бали'] = breakdown.top2;
+        row['Топ8 бали'] = breakdown.top8;
+        row['Невдаха бали'] = breakdown.loser;
+        row['Подіум бали'] = breakdown.podium;
+        row['Переможець бали'] = breakdown.winner;
+      }
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(k => ({wch: Math.max(k.length + 2, 14)}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Прогнози');
+    const info = [
+      ['Раунд', ACTIVE_ROUND.name],
+      ['Місто', ACTIVE_ROUND.city],
+      ['Дата', ACTIVE_ROUND.date],
+      ['Учасників', rows.length],
+      ['Експортовано', new Date().toLocaleString('uk-UA')],
+    ];
+    const wsInfo = XLSX.utils.aoa_to_sheet(info);
+    wsInfo['!cols'] = [{wch:18},{wch:30}];
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Інфо');
+    const filename = `SGP_${ACTIVE_ROUND.id}_прогнози_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showToast(`✓ Збережено ${rows.length} прогнозів`, 'success');
+  } catch(e) {
+    showToast('❌ Помилка: '+e.message, 'error');
+  }
+}
+
+async function exportSwcPredictions() {
+  if (!isAdmin) { showToast('⛔ Доступ заборонено','error'); return; }
+  if (typeof XLSX === 'undefined') { showToast('⚠️ SheetJS не завантажено','error'); return; }
+  showToast('⏳ Формуємо файл...', '');
+  try {
+    const snap = await db.collection('swc_predictions').doc(SWC_ACTIVE_ROUND.id).collection('users').orderBy('savedAt','desc').get();
+    if (snap.empty) { showToast('⚠️ Прогнозів немає', ''); return; }
+    const teams = SWC_ACTIVE_ROUND.teams || SWC_ACTIVE_ROUND.teamsBase || [];
+    const rows = snap.docs.map(doc => {
+      const p = doc.data();
+      const savedAt = p.savedAt?.toDate?.()?.toLocaleString('uk-UA') || '—';
+      const row = {
+        'Нікнейм':  p.nickname || '—',
+        'Email':     p.email || '—',
+        'Збережено': savedAt,
+      };
+      teams.forEach((_, i) => { row[`${i+1}-е місце`] = p.picks?.[`rank${i+1}`] || ''; });
+      teams.forEach(t => { row[`Топ гонщик ${t}`] = p.picks?.[`topRider_${t}`] || ''; });
+      row['Невдаха команда'] = p.picks?.loserTeam || '';
+      if (SWC_ACTIVE_ROUND.results) {
+        const {score} = swcCalcScore(p.picks, SWC_ACTIVE_ROUND.results);
+        row['Бали'] = score;
+      }
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(k => ({wch: Math.max(k.length + 2, 14)}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Прогнози SWC');
+    const info = [
+      ['Раунд', SWC_ACTIVE_ROUND.name],
+      ['Місто', SWC_ACTIVE_ROUND.city],
+      ['Дата', SWC_ACTIVE_ROUND.date],
+      ['Учасників', rows.length],
+      ['Команди', teams.join(', ')],
+      ['Експортовано', new Date().toLocaleString('uk-UA')],
+    ];
+    const wsInfo = XLSX.utils.aoa_to_sheet(info);
+    wsInfo['!cols'] = [{wch:18},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Інфо');
+    const filename = `SWC_${SWC_ACTIVE_ROUND.id}_прогнози_${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showToast(`✓ Збережено ${rows.length} прогнозів`, 'success');
+  } catch(e) {
+    showToast('❌ Помилка: '+e.message, 'error');
+  }
 }
 </script>
 </body>
