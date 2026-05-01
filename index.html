@@ -391,6 +391,9 @@
           <div style="display:flex;flex-wrap:wrap;gap:6px" id="myScoreBreakdown"></div>
         </div>
       </div>
+      <!-- Live intermediate score display -->
+      <div id="myScoreDisplay" style="display:none;background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.3);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;text-align:center"></div>
+
       <div id="savedPredBlock" style="display:none">
         <div class="saved-card">
           <div class="saved-card-header">
@@ -607,6 +610,7 @@
       <button class="admin-nav-btn active" onclick="showAdminSection('adminSgp')">⚡ SGP Гонщики</button>
       <button class="admin-nav-btn" onclick="showAdminSection('adminSwc')">🌍 SWC Команди</button>
       <button class="admin-nav-btn" onclick="showAdminSection('adminResults')">🏁 Результати</button>
+      <button class="admin-nav-btn" onclick="showAdminSection('adminLive')">🔴 Live URL</button>
     </div>
 
     <!-- SGP RIDERS EDITOR -->
@@ -775,6 +779,78 @@
       </div>
     </div>
   </div>
+
+
+    <!-- LIVE RESULTS URL SECTION -->
+    <div class="admin-section" id="adminLive">
+      <div class="admin-info-box">
+        <strong>🔴 Live Results URL</strong><br>
+        Вкажи посилання на сторінку з живими результатами (наприклад, SpeedwayGP Live Tracker або власний JSON). Після старту гонки система буде автоматично перевіряти результати кожні <strong>2 хвилини</strong> і нараховувати проміжні бали учасникам.
+      </div>
+
+      <!-- SGP Live URL -->
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--admin);margin-bottom:12px">SGP — Live URL для поточного раунду</div>
+      <div class="admin-card" style="margin-bottom:20px">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="liveAdminSgpRoundName">Поточний раунд SGP</div>
+            <div class="admin-card-meta" id="liveAdminSgpRoundMeta"></div>
+          </div>
+          <div id="liveAdminSgpStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"></div>
+        </div>
+        <div class="field">
+          <label>URL СТОРІНКИ З ЖИВИМИ РЕЗУЛЬТАТАМИ</label>
+          <input type="url" id="liveAdminSgpUrl" placeholder="https://..." autocomplete="off" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s;width:100%">
+        </div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+          ℹ Підтримуються: будь-які публічні URL. Система завантажує сторінку через proxy та шукає числові результати (позиції 1–16). Перевірка кожні 2 хвилини після старту гонки.
+        </div>
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="liveAdminSgpMsg"></span>
+          <div style="display:flex;gap:8px">
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="liveAdminTestUrl('sgp')">🔍 Тест</button>
+            <button class="btn-admin" onclick="liveAdminSaveUrl('sgp')">💾 Зберегти SGP URL</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:24px 0"></div>
+
+      <!-- SWC Live URL -->
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#60b5ff;margin-bottom:12px">SWC — Live URL для поточного раунду</div>
+      <div class="admin-card" style="border-color:rgba(10,132,255,.3);margin-bottom:20px">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="liveAdminSwcRoundName">Поточний раунд SWC</div>
+            <div class="admin-card-meta" id="liveAdminSwcRoundMeta"></div>
+          </div>
+          <div id="liveAdminSwcStatus" style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"></div>
+        </div>
+        <div class="field">
+          <label>URL СТОРІНКИ З ЖИВИМИ РЕЗУЛЬТАТАМИ</label>
+          <input type="url" id="liveAdminSwcUrl" placeholder="https://..." autocomplete="off" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s;width:100%">
+        </div>
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="liveAdminSwcMsg"></span>
+          <div style="display:flex;gap:8px">
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="liveAdminTestUrl('swc')">🔍 Тест</button>
+            <button style="padding:10px 20px;font-size:13px;border-radius:8px;border:none;background:#0a84ff;color:#fff;cursor:pointer;font-family:var(--font-head);font-weight:700;letter-spacing:1px" onclick="liveAdminSaveUrl('swc')">💾 Зберегти SWC URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live polling status -->
+      <div class="admin-card" style="border-color:rgba(212,240,0,.2)">
+        <div class="admin-card-title" style="margin-bottom:12px">📡 Статус Live-моніторингу</div>
+        <div id="liveAdminPollingStatus" style="font-family:var(--font-mono);font-size:12px;color:var(--muted);line-height:1.8">
+          Моніторинг не запущено (гонка ще не почалась або URL не задано)
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button style="padding:8px 16px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="liveAdminForceCheck()">🔄 Примусова перевірка</button>
+          <button style="padding:8px 16px;font-size:12px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer" onclick="liveAdminStopPolling()">⏹ Зупинити моніторинг</button>
+        </div>
+      </div>
+    </div>
 
   <footer>
     <p>Дані: <a href="https://fimspeedway.com" target="_blank" rel="noopener">fimspeedway.com</a> · SGP 2026 + SWC 2026 · <span style="color:var(--green)">Firebase</span></p>
@@ -2319,9 +2395,10 @@ function showAdminSection(id) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  const idx = {adminSgp:0, adminSwc:1, adminResults:2}[id] || 0;
+  const idx = {adminSgp:0, adminSwc:1, adminResults:2, adminLive:3}[id] || 0;
   document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
   if (id === 'adminResults') adminResultsInit();
+  if (id === 'adminLive') liveAdminInit();
 }
 
 // ── SGP round selector ──
@@ -2683,6 +2760,378 @@ async function exportSwcPredictions() {
     showToast('❌ Помилка: '+e.message, 'error');
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  LIVE RESULTS MONITORING
+// ═══════════════════════════════════════════════════════════════
+
+let livePollingInterval = null;
+let liveLastCheckTime   = null;
+let liveLastRawData     = null;
+const LIVE_POLL_MS      = 2 * 60 * 1000; // 2 хвилини
+
+// ── Admin panel init ──────────────────────────────────────────
+async function liveAdminInit() {
+  // Show current round info
+  const sgpEl = document.getElementById('liveAdminSgpRoundName');
+  const sgpMeta = document.getElementById('liveAdminSgpRoundMeta');
+  if (sgpEl) sgpEl.textContent = ACTIVE_ROUND.name;
+  if (sgpMeta) sgpMeta.textContent = ACTIVE_ROUND.city + ' · ' + new Date(ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+
+  const swcEl = document.getElementById('liveAdminSwcRoundName');
+  const swcMeta = document.getElementById('liveAdminSwcRoundMeta');
+  if (swcEl) swcEl.textContent = SWC_ACTIVE_ROUND.name;
+  if (swcMeta) swcMeta.textContent = SWC_ACTIVE_ROUND.city + ' · ' + new Date(SWC_ACTIVE_ROUND.date).toLocaleDateString('uk-UA',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Load saved URLs from Firestore
+  try {
+    const snap = await db.collection('config').doc('race_config').get();
+    if (snap.exists) {
+      const data = snap.data();
+      const sgpUrlEl = document.getElementById('liveAdminSgpUrl');
+      const swcUrlEl = document.getElementById('liveAdminSwcUrl');
+      const sgpKey = 'live_url_' + ACTIVE_ROUND.id;
+      const swcKey = 'swc_live_url_' + SWC_ACTIVE_ROUND.id;
+      if (sgpUrlEl && data[sgpKey]) sgpUrlEl.value = data[sgpKey];
+      if (swcUrlEl && data[swcKey]) swcUrlEl.value = data[swcKey];
+    }
+  } catch(e) { console.warn('liveAdminInit load:', e.message); }
+
+  liveUpdatePollingStatus();
+}
+
+// ── Save URL to Firestore ────────────────────────────────────
+async function liveAdminSaveUrl(type) {
+  const isSwc = type === 'swc';
+  const inputId = isSwc ? 'liveAdminSwcUrl' : 'liveAdminSgpUrl';
+  const msgId   = isSwc ? 'liveAdminSwcMsg' : 'liveAdminSgpMsg';
+  const urlVal  = (document.getElementById(inputId)?.value || '').trim();
+  const roundId = isSwc ? SWC_ACTIVE_ROUND.id : ACTIVE_ROUND.id;
+  const key     = (isSwc ? 'swc_live_url_' : 'live_url_') + roundId;
+  const msgEl   = document.getElementById(msgId);
+
+  if (msgEl) { msgEl.className = 'admin-status-msg'; msgEl.textContent = 'Збереження...'; }
+
+  try {
+    await db.collection('config').doc('race_config').set({ [key]: urlVal }, { merge: true });
+    if (msgEl) { msgEl.className = 'admin-status-msg ok'; msgEl.textContent = '✓ URL збережено'; }
+    showToast('Live URL збережено для ' + (isSwc ? SWC_ACTIVE_ROUND.name : ACTIVE_ROUND.name));
+    liveUpdatePollingStatus();
+  } catch(e) {
+    if (msgEl) { msgEl.className = 'admin-status-msg err'; msgEl.textContent = '✗ ' + e.message; }
+  }
+}
+
+// ── Test URL (fetch & preview) ───────────────────────────────
+async function liveAdminTestUrl(type) {
+  const isSwc = type === 'swc';
+  const inputId = isSwc ? 'liveAdminSwcUrl' : 'liveAdminSgpUrl';
+  const msgId   = isSwc ? 'liveAdminSwcMsg' : 'liveAdminSgpMsg';
+  const urlVal  = (document.getElementById(inputId)?.value || '').trim();
+  const msgEl   = document.getElementById(msgId);
+
+  if (!urlVal) { if(msgEl){msgEl.className='admin-status-msg err';msgEl.textContent='✗ Введіть URL';} return; }
+  if (msgEl) { msgEl.className='admin-status-msg'; msgEl.textContent='⏳ Перевірка...'; }
+
+  try {
+    const result = await liveFetchUrl(urlVal);
+    if (result.ok) {
+      const preview = result.text.substring(0, 120).replace(/\s+/g,' ');
+      if (msgEl) { msgEl.className='admin-status-msg ok'; msgEl.textContent='✓ Доступно · ' + result.text.length + ' байт · "' + preview + '..."'; }
+    } else {
+      if (msgEl) { msgEl.className='admin-status-msg err'; msgEl.textContent='✗ Не вдалось: ' + result.error; }
+    }
+  } catch(e) {
+    if (msgEl) { msgEl.className='admin-status-msg err'; msgEl.textContent='✗ ' + e.message; }
+  }
+}
+
+// ── Fetch URL via allorigins proxy ───────────────────────────
+async function liveFetchUrl(url) {
+  try {
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return { ok: false, error: 'HTTP ' + res.status };
+    const data = await res.json();
+    const text = data.contents || '';
+    return { ok: true, text };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ── Load live config from Firestore ─────────────────────────
+async function liveLoadConfig() {
+  try {
+    const snap = await db.collection('config').doc('race_config').get();
+    if (!snap.exists) return {};
+    return snap.data() || {};
+  } catch(e) { return {}; }
+}
+
+// ── Start/stop polling ───────────────────────────────────────
+function liveStartPolling() {
+  if (livePollingInterval) return; // already running
+  console.log('[Live] Polling started — interval:', LIVE_POLL_MS / 1000, 's');
+  livePollingInterval = setInterval(liveDoCheck, LIVE_POLL_MS);
+  liveDoCheck(); // immediate first check
+  liveUpdatePollingStatus();
+}
+
+function liveStopPolling() {
+  if (livePollingInterval) {
+    clearInterval(livePollingInterval);
+    livePollingInterval = null;
+  }
+  liveUpdatePollingStatus();
+}
+
+function liveAdminStopPolling() {
+  liveStopPolling();
+  showToast('Live-моніторинг зупинено');
+  liveUpdatePollingStatus();
+}
+
+async function liveAdminForceCheck() {
+  showToast('🔄 Примусова перевірка...');
+  await liveDoCheck();
+}
+
+// ── Main polling check ───────────────────────────────────────
+async function liveDoCheck() {
+  liveLastCheckTime = new Date();
+  const config = await liveLoadConfig();
+
+  // Check SGP
+  const sgpKey = 'live_url_' + ACTIVE_ROUND.id;
+  if (config[sgpKey] && raceLocked && !ACTIVE_ROUND.results) {
+    await liveFetchAndUpdateSgp(config[sgpKey]);
+  }
+
+  // Check SWC
+  const swcKey = 'swc_live_url_' + SWC_ACTIVE_ROUND.id;
+  if (config[swcKey] && swcRaceLocked && !SWC_ACTIVE_ROUND.results) {
+    await liveFetchAndUpdateSwc(config[swcKey]);
+  }
+
+  liveUpdatePollingStatus();
+}
+
+// ── Parse SGP live page & update intermediate results ────────
+async function liveFetchAndUpdateSgp(url) {
+  const result = await liveFetchUrl(url);
+  if (!result.ok) {
+    console.warn('[Live SGP] fetch failed:', result.error);
+    liveSetBannerIntermediate('sgp', null, '⚠ Не вдалось отримати дані: ' + result.error);
+    return;
+  }
+
+  liveLastRawData = result.text;
+  const parsed = liveParseSgpResults(result.text);
+
+  if (!parsed || !parsed.hasData) {
+    liveSetBannerIntermediate('sgp', null, 'Гонка ще не завершена або дані не знайдено');
+    return;
+  }
+
+  // Save intermediate results to Firestore for leaderboard display
+  try {
+    await db.collection('config').doc('live_intermediate').set({
+      [ACTIVE_ROUND.id]: { ...parsed, fetchedAt: new Date().toISOString(), url }
+    }, { merge: true });
+  } catch(e) { console.warn('[Live] save intermediate:', e.message); }
+
+  liveSetBannerIntermediate('sgp', parsed, null);
+  renderLiveIntermediateScore(parsed);
+}
+
+async function liveFetchAndUpdateSwc(url) {
+  const result = await liveFetchUrl(url);
+  if (!result.ok) { console.warn('[Live SWC] fetch failed:', result.error); return; }
+
+  const parsed = liveParseSwcResults(result.text);
+  if (!parsed || !parsed.hasData) return;
+
+  try {
+    await db.collection('config').doc('live_intermediate').set({
+      ['swc_' + SWC_ACTIVE_ROUND.id]: { ...parsed, fetchedAt: new Date().toISOString(), url }
+    }, { merge: true });
+  } catch(e) { console.warn('[Live SWC] save:', e.message); }
+}
+
+// ── SGP result parser — extracts rider positions from HTML/JSON ──
+function liveParseSgpResults(text) {
+  const result = { hasData: false, top2: [], top8: [], podium: [], winner: null, loser: null };
+
+  // Try JSON parsing first (if URL returns JSON)
+  if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+    try {
+      const json = JSON.parse(text.trim());
+      const riders = json.riders || json.results || json.positions || (Array.isArray(json) ? json : null);
+      if (riders && riders.length >= 2) {
+        result.hasData = true;
+        result.podium = riders.slice(0,3).map(r => r.name || r.rider || r.lastName || String(r));
+        result.top2   = result.podium.slice(0,2);
+        result.top8   = riders.slice(0,8).map(r => r.name || r.rider || r.lastName || String(r));
+        result.winner = result.podium[0] || null;
+        if (riders.length >= 16) result.loser = riders[15]?.name || riders[15]?.rider || null;
+        return result;
+      }
+    } catch(e) {}
+  }
+
+  // HTML parsing — look for known patterns in SpeedwayGP / live tracker pages
+  // Pattern 1: numbered list items with rider names
+  const namePatterns = [
+    /<td[^>]*class="[^"]*rider[^"]*"[^>]*>([^<]+)<\//gi,
+    /<td[^>]*class="[^"]*name[^"]*"[^>]*>([^<]+)<\//gi,
+    /<span[^>]*class="[^"]*rider-name[^"]*"[^>]*>([^<]+)<\//gi,
+    /<div[^>]*class="[^"]*rider[^"]*"[^>]*>([^<]+)<\//gi,
+    /class="[^"]*position[^"]*"[^>]*>\s*\d+[^<]*<[^>]*>([A-Z][a-zÀ-ÿ]+(?:\s+[A-Z][a-zÀ-ÿ]+)+)/g,
+  ];
+
+  let names = [];
+  for (const pattern of namePatterns) {
+    pattern.lastIndex = 0;
+    let m;
+    while ((m = pattern.exec(text)) !== null) {
+      const n = m[1].trim().replace(/&amp;/g,'&').replace(/&nbsp;/g,' ');
+      if (n.length > 2 && n.length < 40 && /[A-Za-zА-Яа-яІіЇїЄєÀ-ÿ]/.test(n)) {
+        names.push(n);
+      }
+    }
+    if (names.length >= 3) break;
+  }
+
+  // Cross-reference with known SGP riders
+  if (names.length > 0) {
+    const knownRiders = (ACTIVE_ROUND.riders || SGP_ALL_RIDERS).map(r => r.toLowerCase());
+    const matched = names.filter(n => knownRiders.some(k => k.includes(n.toLowerCase()) || n.toLowerCase().includes(k.split(' ').pop())));
+    if (matched.length >= 2) names = matched;
+  }
+
+  if (names.length >= 2) {
+    result.hasData = true;
+    result.podium  = names.slice(0,3);
+    result.top2    = names.slice(0,2);
+    result.top8    = names.slice(0,8);
+    result.winner  = names[0] || null;
+    if (names.length >= 16) result.loser = names[15];
+  }
+
+  return result;
+}
+
+// ── SWC result parser ────────────────────────────────────────
+function liveParseSwcResults(text) {
+  const result = { hasData: false, ranking: [], loserTeam: null };
+  const teamNames = Object.keys(SWC_TEAMS);
+
+  const found = [];
+  for (const team of teamNames) {
+    const re = new RegExp(escHtml(team).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+    if (re.test(text)) found.push(team);
+  }
+
+  if (found.length >= 2) {
+    result.hasData = true;
+    result.ranking = found;
+    if (found.length >= 4) result.loserTeam = found[found.length - 1];
+  }
+
+  return result;
+}
+
+// ── Render intermediate score in the race banner ─────────────
+function liveSetBannerIntermediate(type, parsed, errorMsg) {
+  const b = document.getElementById('raceBanner');
+  if (!b) return;
+
+  if (errorMsg) {
+    b.className = 'race-banner checking';
+    b.innerHTML = '<span class="race-banner-icon">📡</span><div class="race-banner-text"><strong>Live: перевірка...</strong><span>' + escHtml(errorMsg) + '</span></div>';
+    return;
+  }
+
+  if (!parsed || !parsed.hasData) return;
+
+  const podiumStr = (parsed.podium || []).slice(0,3).map((r,i) => ['🥇','🥈','🥉'][i] + ' ' + escHtml(r)).join(' · ');
+  b.className = 'race-banner locked';
+  b.innerHTML = '<span class="race-banner-icon">🔴</span><div class="race-banner-text"><strong>LIVE — проміжні результати</strong><span>' + podiumStr + '</span></div>';
+}
+
+// ── Render intermediate score for current user ───────────────
+async function renderLiveIntermediateScore(parsed) {
+  if (!currentUser || !parsed || !parsed.hasData) return;
+
+  try {
+    const predSnap = await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').doc(currentUser.uid).get();
+    if (!predSnap.exists) return;
+    const pred = predSnap.data();
+    const interimScore = calcScore(pred, {
+      top2:   parsed.top2   || [],
+      top8:   parsed.top8   || [],
+      podium: parsed.podium || [],
+      winner: parsed.winner || null,
+      loser:  parsed.loser  || null,
+      loserIncident: false
+    });
+
+    // Show in score display if visible
+    const scoreEl = document.getElementById('myScoreDisplay');
+    if (scoreEl) {
+      scoreEl.innerHTML = '<div style="font-family:var(--font-mono);font-size:10px;color:var(--orange);letter-spacing:1px;margin-bottom:2px">🔴 LIVE · ПРОМІЖНИЙ РЕЗУЛЬТАТ</div>' +
+        '<div style="font-family:var(--font-head);font-size:28px;font-weight:900;color:var(--orange)">' + interimScore.score + '</div>' +
+        '<div style="font-family:var(--font-mono);font-size:10px;color:var(--text2)">балів (оновлено ' + new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'}) + ')</div>';
+      scoreEl.style.display = 'block';
+    }
+  } catch(e) { console.warn('[Live score]', e.message); }
+}
+
+// ── Update polling status display ────────────────────────────
+function liveUpdatePollingStatus() {
+  const el = document.getElementById('liveAdminPollingStatus');
+  if (!el) return;
+
+  const lines = [];
+  if (livePollingInterval) {
+    lines.push('🟢 Моніторинг АКТИВНИЙ · інтервал: 2 хв');
+  } else {
+    lines.push('⚪ Моніторинг не запущено');
+  }
+  if (liveLastCheckTime) {
+    lines.push('🕐 Остання перевірка: ' + liveLastCheckTime.toLocaleTimeString('uk-UA'));
+  }
+  if (raceLocked && !ACTIVE_ROUND.results) {
+    lines.push('🏁 SGP ' + escHtml(ACTIVE_ROUND.name) + ' — гонка йде, очікуємо live дані');
+  } else if (ACTIVE_ROUND.results) {
+    lines.push('✅ SGP ' + escHtml(ACTIVE_ROUND.name) + ' — результати опубліковано, моніторинг не потрібен');
+  } else {
+    lines.push('⏳ SGP ' + escHtml(ACTIVE_ROUND.name) + ' — старт ще не відбувся');
+  }
+  el.innerHTML = lines.map(l => '<div>' + l + '</div>').join('');
+}
+
+// ── Auto-start polling after race start ──────────────────────
+// Патч до setRaceLocked — запускаємо polling при блокуванні форми
+const _origSetRaceLocked = setRaceLocked;
+// Override після визначення оригіналу
+(function patchSetRaceLocked() {
+  window._liveOrigSetRaceLocked = window.setRaceLocked;
+  window.setRaceLocked = function(locked, reason) {
+    if (window._liveOrigSetRaceLocked) window._liveOrigSetRaceLocked(locked, reason);
+    if (locked) {
+      // Гонка стартувала — запускаємо polling якщо є URL
+      liveLoadConfig().then(cfg => {
+        const sgpKey = 'live_url_' + ACTIVE_ROUND.id;
+        if (cfg[sgpKey]) liveStartPolling();
+      });
+    } else {
+      liveStopPolling();
+    }
+  };
+})();
+
 </script>
 </body>
 </html>
