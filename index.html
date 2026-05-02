@@ -796,20 +796,43 @@
         <div class="admin-card-header">
           <div>
             <div class="admin-card-title">Поточний рейтинг для нарахування балів</div>
-            <div class="admin-card-meta">Порядок гонщиків визначає очки за подіум та переможця: 1-3 місце = +2, 4-6 = +4, 7-9 = +6, 10-16 = +8</div>
+            <div class="admin-card-meta">Порядок гонщиків визначає очки за подіум та переможця: 1-3 = +2, 4-6 = +4, 7-9 = +6, 10-16 = +8</div>
           </div>
-          <a href="https://fimspeedway.com/sgp/standings" target="_blank" rel="noopener" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap">📊 fimspeedway.com/sgp/standings ↗</a>
+          <a href="https://fimspeedway.com/sgp/standings" target="_blank" rel="noopener" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap">📊 fimspeedway.com ↗</a>
         </div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">
-          Вкажіть гонщиків у порядку їх поточного місця в турнірній таблиці (1-ше місце зверху). Зберігається у <code>config/sgp_standings</code>.
+
+        <!-- Поточний рейтинг (preview) -->
+        <div id="adminStandingsPreview" style="margin-bottom:14px">
+          <!-- рендериться при завантаженні -->
         </div>
-        <div id="adminStandingsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:14px">
+
+        <!-- Кнопки вибору режиму -->
+        <div id="adminStandingsModeRow" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button style="padding:9px 16px;font-size:12px;border-radius:8px;border:1px solid var(--admin-border);background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--font-head);font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:6px" onclick="adminStandingsOpenManual()">✏️ Додати вручну</button>
+          <button style="padding:9px 16px;font-size:12px;border-radius:8px;border:1px solid var(--admin-border);background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--font-head);font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:6px" onclick="adminStandingsFetchPage()">🌐 Завантажити з SGP page</button>
+        </div>
+
+        <!-- Режим: вручну -->
+        <div id="adminStandingsManualBlock" style="display:none;margin-bottom:14px">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+            Введіть прізвища гонщиків у порядку рейтингу (кожен з нового рядка, 16 гонщиків):
+          </div>
+          <textarea id="adminStandingsTextarea" rows="16" spellcheck="false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:12px;padding:10px 12px;outline:none;resize:vertical;line-height:1.7" placeholder="ZMARZLIK&#10;BEWLEY&#10;LAMBERT&#10;..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button style="padding:8px 14px;font-size:12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminStandingsCloseManual()">✕ Закрити</button>
+            <button class="btn-admin" style="padding:8px 18px;font-size:12px" onclick="adminStandingsApplyManual()">✓ Застосувати</button>
+          </div>
+        </div>
+
+        <!-- Редактор рядків (показується після заповнення будь-яким способом) -->
+        <div id="adminStandingsList" style="display:none;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:14px">
           <!-- динамічно рендериться -->
         </div>
+
         <div class="admin-action-row">
           <span class="admin-status-msg" id="adminStandingsStatus"></span>
           <div style="display:flex;gap:8px">
-            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadStandings()">↺ Скасувати</button>
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadStandings()">↺ Скинути</button>
             <button class="btn-admin" onclick="adminSaveStandings()">💾 Зберегти рейтинг</button>
           </div>
         </div>
@@ -2282,15 +2305,17 @@ function adminRenderStandingsList(standings) {
   const wrap = document.getElementById('adminStandingsList');
   if (!wrap) return;
   const pointsLabel = (i) => {
-    if (i < 3)  return '<span style="color:var(--green);font-size:10px">+2 пкт</span>';
-    if (i < 6)  return '<span style="color:var(--accent2);font-size:10px">+4 пкт</span>';
-    if (i < 9)  return '<span style="color:var(--orange);font-size:10px">+6 пкт</span>';
-    return '<span style="color:var(--red);font-size:10px">+8 пкт</span>';
+    if (i < 3)  return '<span style="color:var(--green);font-size:10px;min-width:36px">+2 пкт</span>';
+    if (i < 6)  return '<span style="color:var(--accent2);font-size:10px;min-width:36px">+4 пкт</span>';
+    if (i < 9)  return '<span style="color:var(--orange);font-size:10px;min-width:36px">+6 пкт</span>';
+    return '<span style="color:var(--red);font-size:10px;min-width:36px">+8 пкт</span>';
   };
+  wrap.style.display = 'grid';
   wrap.innerHTML = standings.map((r, i) => `
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px">
       <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:20px;text-align:right">${i+1}.</span>
       <select class="rider-select admin-standings-sel" data-idx="${i}" style="flex:1;font-size:12px;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text)">
+        <option value="">— оберіть —</option>
         ${(ACTIVE_ROUND.riders||SGP_ALL_RIDERS).map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
       </select>
       ${pointsLabel(i)}
@@ -2298,10 +2323,106 @@ function adminRenderStandingsList(standings) {
   `).join('');
 }
 
+function adminRenderStandingsPreview(standings) {
+  const wrap = document.getElementById('adminStandingsPreview');
+  if (!wrap) return;
+  if (!standings || !standings.length) {
+    wrap.innerHTML = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:8px 0">Рейтинг ще не задано</div>';
+    return;
+  }
+  const groups = [
+    { label:'+2', color:'var(--green)',   riders: standings.slice(0,3)  },
+    { label:'+4', color:'var(--accent2)', riders: standings.slice(3,6)  },
+    { label:'+6', color:'var(--orange)',  riders: standings.slice(6,9)  },
+    { label:'+8', color:'var(--red)',     riders: standings.slice(9,16) },
+  ];
+  wrap.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px">` +
+    groups.map(g => g.riders.map((r,i) => {
+      const pos = standings.indexOf(r)+1;
+      return `<span style="font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:5px;background:var(--surface);border:1px solid var(--border);color:${g.color}">${pos}. ${escHtml(r)} <span style="opacity:.55">${g.label}</span></span>`;
+    }).join('')).join('') + `</div>`;
+}
+
 function adminLoadStandings() {
+  adminRenderStandingsPreview(SGP_STANDINGS);
   adminRenderStandingsList([...SGP_STANDINGS]);
+  document.getElementById('adminStandingsManualBlock').style.display = 'none';
   const el = document.getElementById('adminStandingsStatus');
   if (el) { el.textContent = ''; el.className = 'admin-status-msg'; }
+}
+
+function adminStandingsOpenManual() {
+  const ta = document.getElementById('adminStandingsTextarea');
+  const sels = document.querySelectorAll('.admin-standings-sel');
+  // Заповнюємо textarea поточними значеннями селектів (або SGP_STANDINGS)
+  const current = sels.length ? [...sels].map(s=>s.value).filter(Boolean) : [...SGP_STANDINGS];
+  ta.value = current.join('\n');
+  document.getElementById('adminStandingsManualBlock').style.display = 'block';
+  ta.focus();
+}
+
+function adminStandingsCloseManual() {
+  document.getElementById('adminStandingsManualBlock').style.display = 'none';
+}
+
+function adminStandingsApplyManual() {
+  const ta = document.getElementById('adminStandingsTextarea');
+  const lines = ta.value.split('\n').map(l => l.trim().toUpperCase()).filter(Boolean);
+  if (lines.length < 1) {
+    showToast('⚠️ Введіть хоча б одного гонщика', 'error');
+    return;
+  }
+  // Normalize — map partial/lowercase names to known riders
+  const allRiders = ACTIVE_ROUND.riders || SGP_ALL_RIDERS;
+  const matched = lines.map(name => {
+    // Exact match first
+    if (allRiders.includes(name)) return name;
+    // Partial match
+    const found = allRiders.find(r => r.toUpperCase().includes(name) || name.includes(r.toUpperCase()));
+    return found || name;
+  });
+  adminRenderStandingsList(matched);
+  document.getElementById('adminStandingsManualBlock').style.display = 'none';
+  showToast(`✓ Застосовано ${matched.length} гонщиків`, 'success');
+}
+
+async function adminStandingsFetchPage() {
+  const statusEl = document.getElementById('adminStandingsStatus');
+  if (statusEl) { statusEl.textContent = '⏳ Завантаження з fimspeedway.com...'; statusEl.className = 'admin-status-msg'; }
+  showToast('⏳ Завантаження рейтингу...', 'success');
+  try {
+    const url = 'https://fimspeedway.com/sgp/standings';
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const resp = await fetch(proxy);
+    const json = await resp.json();
+    const html = json.contents || '';
+    // Parse rider names from standings page — look for known rider surnames in order
+    const allRiders = ACTIVE_ROUND.riders || SGP_ALL_RIDERS;
+    // Extract text and find rider name occurrences in order
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const text = tmp.innerText || tmp.textContent || '';
+    // Find each known rider in order of first appearance
+    const found = [];
+    const riderPositions = allRiders.map(r => ({
+      name: r,
+      pos: text.toUpperCase().indexOf(r.toUpperCase())
+    })).filter(r => r.pos >= 0).sort((a,b) => a.pos - b.pos);
+    riderPositions.forEach(r => { if (!found.includes(r.name)) found.push(r.name); });
+    // Add any remaining riders not found
+    allRiders.forEach(r => { if (!found.includes(r)) found.push(r); });
+    if (found.length < 3) {
+      if (statusEl) { statusEl.textContent = '❌ Не вдалось розпізнати гонщиків на сторінці'; statusEl.className = 'admin-status-msg err'; }
+      showToast('❌ Не вдалось розпізнати гонщиків', 'error');
+      return;
+    }
+    adminRenderStandingsList(found);
+    if (statusEl) { statusEl.textContent = `✓ Завантажено ${found.length} гонщиків — перевірте порядок та збережіть`; statusEl.className = 'admin-status-msg ok'; }
+    showToast(`✓ Знайдено ${found.length} гонщиків`, 'success');
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = '❌ Помилка: ' + e.message; statusEl.className = 'admin-status-msg err'; }
+    showToast('❌ ' + e.message, 'error');
+  }
 }
 
 async function adminSaveStandings() {
@@ -2309,12 +2430,12 @@ async function adminSaveStandings() {
   const sels = document.querySelectorAll('.admin-standings-sel');
   const standings = [...sels].map(s => s.value).filter(Boolean);
   if (standings.length !== 16) {
-    showToast('⚠️ Потрібно 16 гонщиків у рейтингу', 'error');
+    showToast(`⚠️ Потрібно 16 гонщиків (зараз ${standings.length})`, 'error');
     return;
   }
   const unique = new Set(standings);
   if (unique.size !== 16) {
-    showToast('⚠️ Всі гонщики мають бути унікальними', 'error');
+    showToast('⚠️ Є повторювані гонщики в рейтингу', 'error');
     return;
   }
   const el = document.getElementById('adminStandingsStatus');
@@ -2322,6 +2443,7 @@ async function adminSaveStandings() {
   try {
     await db.collection('config').doc('sgp_standings').set({ standings });
     SGP_STANDINGS = standings;
+    adminRenderStandingsPreview(standings);
     if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'); el.className = 'admin-status-msg ok'; }
     showToast('✓ Рейтинг SGP збережено!', 'success');
   } catch(e) {
