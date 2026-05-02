@@ -436,9 +436,9 @@
           <div class="pred-group-title">Невдаха дня</div>
           <select class="rider-select" id="loser" style="margin-top:10px"><option value="">Оберіть</option></select>
         </div>
-        <div class="section-title"><span>Категорія 4 — Подіум</span><span class="points-badge">макс. +3 пкт</span></div>
+        <div class="section-title"><span>Категорія 4 — Подіум</span><span class="points-badge">макс. +24 пкт</span></div>
         <div class="pred-group full" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>Три місця фіналу</span><span class="pred-group-pts">+1 за кожне вгадане місце</span></div>
+          <div class="pred-group-label"><span>Три місця фіналу</span><span class="pred-group-pts">+2/4/6/8 за кожного вгаданого в трійці (за рейтингом)</span></div>
           <div class="pred-group-title">Подіум фіналу</div>
           <div class="top8-grid" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr">
             <div><div class="slot-label">🥇 1-е</div><select class="rider-select" id="podium1"><option value="">Гонщик</option></select></div>
@@ -446,9 +446,9 @@
             <div><div class="slot-label">🥉 3-є</div><select class="rider-select" id="podium3"><option value="">Гонщик</option></select></div>
           </div>
         </div>
-        <div class="section-title"><span>Категорія 5 — Переможець</span><span class="points-badge">макс. +2 пкт</span></div>
+        <div class="section-title"><span>Категорія 5 — Переможець</span><span class="points-badge">макс. +8 пкт</span></div>
         <div class="pred-group" style="margin-bottom:24px">
-          <div class="pred-group-label"><span>Переможець фіналу</span><span class="pred-group-pts">+2 за точне вгадання</span></div>
+          <div class="pred-group-label"><span>Переможець фіналу</span><span class="pred-group-pts">+2/4/6/8 залежно від рейтингу гонщика</span></div>
           <div class="pred-group-title">Чемпіон гонки</div>
           <select class="rider-select" id="winner" style="margin-top:10px"><option value="">Оберіть</option></select>
         </div>
@@ -789,6 +789,32 @@
       </div>
 
       <!-- SGP Live URL -->
+      <!-- SGP Standings -->
+      <div style="height:1px;background:var(--border);margin:24px 0"></div>
+      <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--admin);margin-bottom:12px">SGP — Рейтинг гонщиків (турнірна таблиця)</div>
+      <div class="admin-card" style="margin-bottom:20px">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">Поточний рейтинг для нарахування балів</div>
+            <div class="admin-card-meta">Порядок гонщиків визначає очки за подіум та переможця: 1-3 місце = +2, 4-6 = +4, 7-9 = +6, 10-16 = +8</div>
+          </div>
+          <a href="https://fimspeedway.com/sgp/standings" target="_blank" rel="noopener" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap">📊 fimspeedway.com/sgp/standings ↗</a>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+          Вкажіть гонщиків у порядку їх поточного місця в турнірній таблиці (1-ше місце зверху). Зберігається у <code>config/sgp_standings</code>.
+        </div>
+        <div id="adminStandingsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:14px">
+          <!-- динамічно рендериться -->
+        </div>
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="adminStandingsStatus"></span>
+          <div style="display:flex;gap:8px">
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadStandings()">↺ Скасувати</button>
+            <button class="btn-admin" onclick="adminSaveStandings()">💾 Зберегти рейтинг</button>
+          </div>
+        </div>
+      </div>
+
       <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--admin);margin-bottom:12px">SGP — Live URL для поточного раунду</div>
       <div class="admin-card" style="margin-bottom:20px">
         <div class="admin-card-header">
@@ -941,6 +967,27 @@ const SEASON = {
 
 let ACTIVE_ROUND = SEASON.rounds.find(r=>!r.results) || SEASON.rounds[SEASON.rounds.length-1];
 
+// ─── SGP Standings (рейтинг гонщиків, позиція 1-16) ──────────
+// Масив імен гонщиків за місцями в турнірній таблиці (1-ше місце = індекс 0)
+// Завантажується з Firestore config/sgp_standings, fallback — SGP_MAIN_RIDERS
+let SGP_STANDINGS = [...SGP_MAIN_RIDERS]; // default fallback
+
+function getRiderStandingRank(riderName) {
+  // Повертає позицію гонщика в рейтингу (1-16), або 16 якщо не знайдено
+  if (!riderName) return 16;
+  const idx = SGP_STANDINGS.findIndex(r => r === riderName);
+  return idx >= 0 ? idx + 1 : 16;
+}
+
+function getPodiumPoints(riderName) {
+  // Нараховує бали за рейтингом гонщика
+  const rank = getRiderStandingRank(riderName);
+  if (rank <= 3)  return 2;
+  if (rank <= 6)  return 4;
+  if (rank <= 9)  return 6;
+  return 8; // 10-16
+}
+
 // ─── Scoring ─────────────────────────────────────────────────
 function calcScore(pred, results) {
   if (!pred||!results) return {score:0,breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0}};
@@ -955,9 +1002,10 @@ function calcScore(pred, results) {
   if(pred.loser&&pred.loser===results.loser){ lp++; if(results.loserIncident)lp++; }
   breakdown.loser=lp; score+=lp;
   let pp=0;
-  [[pred.podium1,0],[pred.podium2,1],[pred.podium3,2]].forEach(([r,i])=>{ if(r&&results.podium[i]===r)pp++; });
+  [pred.podium1,pred.podium2,pred.podium3].forEach(r=>{ if(r&&results.podium.includes(r))pp+=getPodiumPoints(r); });
   breakdown.podium=pp; score+=pp;
-  let wp=pred.winner&&pred.winner===results.winner?2:0;
+  let wp=0;
+  if(pred.winner&&pred.winner===results.winner) wp=getPodiumPoints(pred.winner);
   breakdown.winner=wp; score+=wp;
   return {score,breakdown};
 }
@@ -1195,12 +1243,24 @@ async function loadSwcResultsConfig() {
   } catch(e) { console.warn('loadSwcResultsConfig:', e.message); }
 }
 
+async function loadStandingsConfig() {
+  try {
+    const snap = await db.collection('config').doc('sgp_standings').get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (Array.isArray(data.standings) && data.standings.length > 0) {
+        SGP_STANDINGS = data.standings;
+      }
+    }
+  } catch(e) { console.warn('loadStandingsConfig:', e.message); }
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  APP ENTRY
 // ═══════════════════════════════════════════════════════════════
 async function enterApp() {
   // Завантажуємо кастомні конфіги з Firestore перед рендером
-  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig(), loadSgpResultsConfig(), loadSwcResultsConfig()]);
+  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig(), loadSgpResultsConfig(), loadSwcResultsConfig(), loadStandingsConfig()]);
 
   // Перераховуємо ACTIVE_ROUND після завантаження результатів
   ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
@@ -1392,7 +1452,7 @@ async function loadUserPrediction() {
           scoreCard.style.display='';
           document.getElementById('myScoreNum').textContent=res.score;
           const bd=res.breakdown;
-          document.getElementById('myScoreBreakdown').innerHTML=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2}]
+          document.getElementById('myScoreBreakdown').innerHTML=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:24},{k:'Переможець',v:bd.winner,max:8}]
             .map(c=>`<div style="background:var(--surface);border:1px solid ${c.v>0?'rgba(48,209,88,.25)':'var(--border)'};border-radius:8px;padding:8px 12px;text-align:center"><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase">${c.k}</div><div style="font-family:var(--font-head);font-size:22px;font-weight:900;color:${c.v>0?'var(--green)':'var(--muted)'}">${c.v??0}</div><div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">/ ${c.max}</div></div>`).join('');
         }
       }
@@ -1504,7 +1564,7 @@ async function renderLeaderboard() {
       const isMe=currentUser&&p.uid===currentUser.uid;
       const rankColor=rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
       const bd=p.breakdown||{};
-      const chips=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:3},{k:'Переможець',v:bd.winner,max:2}]
+      const chips=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:24},{k:'Переможець',v:bd.winner,max:8}]
         .map(c=>`<span class="lb-chip ${c.v>0?'has-pts':''}">${c.k}: ${c.v??0}</span>`).join('');
       return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;
     }).join('');
@@ -2030,6 +2090,7 @@ function adminResultsInit() {
   const firstPending = SEASON.rounds.find(r => !r.results) || SEASON.rounds[0];
   adminResSelectRound(firstPending.id);
   adminSwcResSelectRound(SWC_SEASON.rounds[0].id);
+  adminLoadStandings();
 }
 
 // ─── SGP Results editor ───────────────────────────────────────
@@ -2214,6 +2275,59 @@ async function adminClearSgpResult() {
     renderRoundSelector();
     showToast('Результат видалено', 'success');
   } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+// ─── SGP Standings editor ─────────────────────────────────────
+function adminRenderStandingsList(standings) {
+  const wrap = document.getElementById('adminStandingsList');
+  if (!wrap) return;
+  const pointsLabel = (i) => {
+    if (i < 3)  return '<span style="color:var(--green);font-size:10px">+2 пкт</span>';
+    if (i < 6)  return '<span style="color:var(--accent2);font-size:10px">+4 пкт</span>';
+    if (i < 9)  return '<span style="color:var(--orange);font-size:10px">+6 пкт</span>';
+    return '<span style="color:var(--red);font-size:10px">+8 пкт</span>';
+  };
+  wrap.innerHTML = standings.map((r, i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:20px;text-align:right">${i+1}.</span>
+      <select class="rider-select admin-standings-sel" data-idx="${i}" style="flex:1;font-size:12px;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text)">
+        ${(ACTIVE_ROUND.riders||SGP_ALL_RIDERS).map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
+      </select>
+      ${pointsLabel(i)}
+    </div>
+  `).join('');
+}
+
+function adminLoadStandings() {
+  adminRenderStandingsList([...SGP_STANDINGS]);
+  const el = document.getElementById('adminStandingsStatus');
+  if (el) { el.textContent = ''; el.className = 'admin-status-msg'; }
+}
+
+async function adminSaveStandings() {
+  if (!isAdmin) return;
+  const sels = document.querySelectorAll('.admin-standings-sel');
+  const standings = [...sels].map(s => s.value).filter(Boolean);
+  if (standings.length !== 16) {
+    showToast('⚠️ Потрібно 16 гонщиків у рейтингу', 'error');
+    return;
+  }
+  const unique = new Set(standings);
+  if (unique.size !== 16) {
+    showToast('⚠️ Всі гонщики мають бути унікальними', 'error');
+    return;
+  }
+  const el = document.getElementById('adminStandingsStatus');
+  if (el) { el.textContent = 'Збереження...'; el.className = 'admin-status-msg'; }
+  try {
+    await db.collection('config').doc('sgp_standings').set({ standings });
+    SGP_STANDINGS = standings;
+    if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'); el.className = 'admin-status-msg ok'; }
+    showToast('✓ Рейтинг SGP збережено!', 'success');
+  } catch(e) {
+    if (el) { el.textContent = '❌ ' + e.message; el.className = 'admin-status-msg err'; }
+    showToast('❌ ' + e.message, 'error');
+  }
 }
 
 function adminSetResStatus(msg, ok=false, err=false) {
