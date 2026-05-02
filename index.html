@@ -1407,11 +1407,55 @@ function buildRiderOptions(riders) {
   return html;
 }
 
+function buildRiderOptionsWithPoints(riders) {
+  // Групуємо гонщиків за рейтинговими зонами з відображенням потенційних балів
+  const groups = [
+    { label: '🟢 Рейтинг 1–3 · +2 пкт',   pts: '+2', positions: [1,2,3]   },
+    { label: '🟡 Рейтинг 4–6 · +4 пкт',   pts: '+4', positions: [4,5,6]   },
+    { label: '🟠 Рейтинг 7–9 · +6 пкт',   pts: '+6', positions: [7,8,9]   },
+    { label: '🔴 Рейтинг 10–16 · +8 пкт', pts: '+8', positions: [10,11,12,13,14,15,16] },
+  ];
+  let html = '<option value="">— оберіть —</option>';
+  const standingsAvailable = SGP_STANDINGS && SGP_STANDINGS.length > 0;
+  if (!standingsAvailable) {
+    // Fallback — без рейтингу, звичайний список
+    html += '<optgroup label="── Рейтинг не задано ──">';
+    riders.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+    html += '</optgroup>';
+    return html;
+  }
+  groups.forEach(g => {
+    const groupRiders = g.positions
+      .map(pos => SGP_STANDINGS[pos - 1])
+      .filter(r => r && riders.includes(r));
+    if (!groupRiders.length) return;
+    html += `<optgroup label="${g.label}">`;
+    groupRiders.forEach((r, i) => {
+      const pos = SGP_STANDINGS.indexOf(r) + 1;
+      html += `<option value="${escHtml(r)}">#${pos} ${escHtml(r)} · ${g.pts}</option>`;
+    });
+    html += '</optgroup>';
+  });
+  // Гонщики поза рейтингом (reserves тощо)
+  const inStandings = riders.filter(r => SGP_STANDINGS.includes(r));
+  const notInStandings = riders.filter(r => !SGP_STANDINGS.includes(r));
+  if (notInStandings.length) {
+    html += '<optgroup label="── Поза рейтингом ──">';
+    notInStandings.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+    html += '</optgroup>';
+  }
+  return html;
+}
+
 function populateSelects() {
   const riders=ACTIVE_ROUND.riders;
-  ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
+  ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     el.innerHTML=buildRiderOptions(riders);
+  });
+  ['podium1','podium2','podium3','winner'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=buildRiderOptionsWithPoints(riders);
   });
   // Вішаємо один обробник rebuildAllSelects на всі поля з крос-виключенням
   ALL_UNIQUE_FIELDS.forEach(id=>{
@@ -2444,6 +2488,14 @@ async function adminSaveStandings() {
     await db.collection('config').doc('sgp_standings').set({ standings });
     SGP_STANDINGS = standings;
     adminRenderStandingsPreview(standings);
+    // Оновлюємо дропдауни подіуму та переможця з новим рейтингом
+    const riders = ACTIVE_ROUND.riders;
+    ['podium1','podium2','podium3','winner'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      const val = el.value;
+      el.innerHTML = buildRiderOptionsWithPoints(riders);
+      el.value = val;
+    });
     if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'); el.className = 'admin-status-msg ok'; }
     showToast('✓ Рейтинг SGP збережено!', 'success');
   } catch(e) {
