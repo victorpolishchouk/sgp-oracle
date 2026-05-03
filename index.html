@@ -2330,6 +2330,18 @@ function showAdminSection(id) {
   document.getElementById(id).classList.add('active');
   const idx = {adminSgp:0, adminSwc:1, adminResults:2}[id] || 0;
   document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
+  // Перерендеруємо вміст при кожному переключенні табу
+  if (id === 'adminSgp') {
+    adminRenderRoundSelector();
+    adminRenderBatchPicker();
+    if (adminActiveRoundId) adminLoadRiders();
+    else if (SEASON.rounds.length) adminSelectRound(SEASON.rounds[0].id);
+  }
+  if (id === 'adminSwc') {
+    adminRenderSwcTeamTabs();
+    if (adminActiveSwcTeam) adminLoadSwcTeam();
+    else { const t = Object.keys(SWC_TEAMS)[0]; if (t) adminSelectSwcTeam(t); }
+  }
   if (id === 'adminResults') adminResultsInit();
 }
 
