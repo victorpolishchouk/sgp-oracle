@@ -2363,13 +2363,17 @@ function adminRenderStandingsList(standings) {
     if (i < 9)  return '<span style="color:var(--orange);font-size:10px;min-width:36px">+6 пкт</span>';
     return '<span style="color:var(--red);font-size:10px;min-width:36px">+8 пкт</span>';
   };
+  // Об'єднуємо список раунду + всіх гонщиків з поточного standings —
+  // щоб гонщики яких немає в ACTIVE_ROUND.riders (напр. BLODORN) теж з'являлись в опціях
+  const baseRiders = ACTIVE_ROUND.riders || SGP_ALL_RIDERS;
+  const allOptions = [...new Set([...baseRiders, ...standings.filter(Boolean)])];
   wrap.style.display = 'grid';
   wrap.innerHTML = standings.map((r, i) => `
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px">
       <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:20px;text-align:right">${i+1}.</span>
       <select class="rider-select admin-standings-sel" data-idx="${i}" style="flex:1;font-size:12px;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text)">
         <option value="">— оберіть —</option>
-        ${(ACTIVE_ROUND.riders||SGP_ALL_RIDERS).map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
+        ${allOptions.map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
       </select>
       ${pointsLabel(i)}
     </div>
