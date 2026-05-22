@@ -838,6 +838,29 @@
         </div>
       </div>
 
+      <!-- Замінники / гонщики поза рейтингом -->
+      <div class="admin-card" style="margin-bottom:20px">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">🔄 Замінники та гонщики поза рейтингом</div>
+            <div class="admin-card-meta">Гонщики що замінюють травмованих — автоматично отримують +8 балів (позиція 10–16)</div>
+          </div>
+        </div>
+        <div class="admin-info-box">
+          Додайте сюди гонщиків які <strong>не входять в основний рейтинг</strong> (замінники травмованих тощо).<br>
+          Вони будуть доступні у прогнозах та отримають <strong>+8 балів</strong> за подіум/переможця.<br>
+          Назви вводяться <strong>великими літерами</strong>, кожен з нового рядка.
+        </div>
+        <div id="adminSubsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+          <!-- рендериться динамічно -->
+        </div>
+        <button class="admin-add-btn" id="adminSubsAddBtn" onclick="adminSubsAddRow()">＋ Додати замінника</button>
+        <div class="admin-action-row">
+          <span class="admin-status-msg" id="adminSubsStatus"></span>
+          <button class="btn-admin" onclick="adminSubsSave()">💾 Зберегти замінників</button>
+        </div>
+      </div>
+
       <div style="font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--admin);margin-bottom:12px">SGP — Live URL для поточного раунду</div>
       <div class="admin-card" style="margin-bottom:20px">
         <div class="admin-card-header">
@@ -958,6 +981,8 @@ const SGP_RESERVE_RIDERS = [
   'GROBAUER'        // #18 Valentin Grobauer (Track Reserve) 🇩🇪
 ];
 const SGP_ALL_RIDERS = [...SGP_MAIN_RIDERS, ...SGP_RESERVE_RIDERS];
+
+let SGP_SUBS = []; // Замінники — завантажуються з Firestore config/sgp_standings (поле subs)
 
 // ═══════════════════════════════════════════════════════════════
 //  SEASON CONFIG — 2026
@@ -1274,6 +1299,14 @@ async function loadStandingsConfig() {
       if (Array.isArray(data.standings) && data.standings.length > 0) {
         SGP_STANDINGS = data.standings;
       }
+      // Завантажуємо замінників (гонщики поза рейтингом — автоматично +8 балів)
+      if (Array.isArray(data.subs)) {
+        SGP_SUBS = data.subs.map(s => s.trim().toUpperCase()).filter(Boolean);
+        // Додаємо замінників у кінець SGP_STANDINGS (позиція 10+, тобто +8 балів)
+        SGP_SUBS.forEach(s => {
+          if (!SGP_STANDINGS.includes(s)) SGP_STANDINGS.push(s);
+        });
+      }
     }
   } catch(e) { console.warn('loadStandingsConfig:', e.message); }
 }
@@ -1393,24 +1426,15 @@ function rebuildAllSelects() {
 }
 
 function buildRiderOptions(riders) {
-  const main     = riders.filter(r => SGP_MAIN_RIDERS.includes(r));
+  const main = riders.filter(r => SGP_MAIN_RIDERS.includes(r));
   const reserves = riders.filter(r => SGP_RESERVE_RIDERS.includes(r));
-  // Гонщики додані адміном вручну — не входять в жодну константу
-  const custom   = riders.filter(r => !SGP_MAIN_RIDERS.includes(r) && !SGP_RESERVE_RIDERS.includes(r));
   let html = '<option value="">— оберіть —</option>';
-  if (main.length) {
-    html += '<optgroup label="── Основний склад (1–16) ──">';
-    main.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
-    html += '</optgroup>';
-  }
-  if (reserves.length) {
+  html += '<optgroup label="── Основний склад (1–16) ──">';
+  main.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+  html += '</optgroup>';
+  if(reserves.length) {
     html += '<optgroup label="── Track Reserves (17–18) ──">';
     reserves.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
-    html += '</optgroup>';
-  }
-  if (custom.length) {
-    html += '<optgroup label="── Додано адміністратором ──">';
-    custom.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
     html += '</optgroup>';
   }
   return html;
@@ -2363,17 +2387,13 @@ function adminRenderStandingsList(standings) {
     if (i < 9)  return '<span style="color:var(--orange);font-size:10px;min-width:36px">+6 пкт</span>';
     return '<span style="color:var(--red);font-size:10px;min-width:36px">+8 пкт</span>';
   };
-  // Об'єднуємо список раунду + всіх гонщиків з поточного standings —
-  // щоб гонщики яких немає в ACTIVE_ROUND.riders (напр. BLODORN) теж з'являлись в опціях
-  const baseRiders = ACTIVE_ROUND.riders || SGP_ALL_RIDERS;
-  const allOptions = [...new Set([...baseRiders, ...standings.filter(Boolean)])];
   wrap.style.display = 'grid';
   wrap.innerHTML = standings.map((r, i) => `
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px">
       <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:20px;text-align:right">${i+1}.</span>
       <select class="rider-select admin-standings-sel" data-idx="${i}" style="flex:1;font-size:12px;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text)">
         <option value="">— оберіть —</option>
-        ${allOptions.map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
+        ${(ACTIVE_ROUND.riders||SGP_ALL_RIDERS).map(rider=>`<option value="${escHtml(rider)}" ${rider===r?'selected':''}>${escHtml(rider)}</option>`).join('')}
       </select>
       ${pointsLabel(i)}
     </div>
@@ -2401,8 +2421,11 @@ function adminRenderStandingsPreview(standings) {
 }
 
 function adminLoadStandings() {
+  // Показуємо лише основний рейтинг (без замінників) у редакторі
+  const mainStandings = SGP_STANDINGS.filter(s => !SGP_SUBS.includes(s));
   adminRenderStandingsPreview(SGP_STANDINGS);
-  adminRenderStandingsList([...SGP_STANDINGS]);
+  adminRenderStandingsList([...mainStandings]);
+  adminSubsRender();
   document.getElementById('adminStandingsManualBlock').style.display = 'none';
   const el = document.getElementById('adminStandingsStatus');
   if (el) { el.textContent = ''; el.className = 'admin-status-msg'; }
@@ -2486,21 +2509,27 @@ async function adminSaveStandings() {
   if (!isAdmin) return;
   const sels = document.querySelectorAll('.admin-standings-sel');
   const standings = [...sels].map(s => s.value).filter(Boolean);
-  if (standings.length !== 16) {
-    showToast(`⚠️ Потрібно 16 гонщиків (зараз ${standings.length})`, 'error');
+  if (standings.length < 1) {
+    showToast('⚠️ Рейтинг порожній', 'error');
     return;
   }
   const unique = new Set(standings);
-  if (unique.size !== 16) {
+  if (unique.size !== standings.length) {
     showToast('⚠️ Є повторювані гонщики в рейтингу', 'error');
     return;
   }
+  // Збираємо замінників (не включаються в основний рейтинг)
+  const subsInputs = document.querySelectorAll('.admin-subs-input');
+  const subs = [...subsInputs].map(i => i.value.trim().toUpperCase()).filter(Boolean);
   const el = document.getElementById('adminStandingsStatus');
   if (el) { el.textContent = 'Збереження...'; el.className = 'admin-status-msg'; }
   try {
-    await db.collection('config').doc('sgp_standings').set({ standings });
-    SGP_STANDINGS = standings;
-    adminRenderStandingsPreview(standings);
+    await db.collection('config').doc('sgp_standings').set({ standings, subs });
+    SGP_STANDINGS = [...standings];
+    SGP_SUBS = subs;
+    // Додаємо замінників в кінець SGP_STANDINGS (позиція 10+, тобто +8)
+    subs.forEach(s => { if (!SGP_STANDINGS.includes(s)) SGP_STANDINGS.push(s); });
+    adminRenderStandingsPreview(SGP_STANDINGS);
     // Оновлюємо дропдауни подіуму та переможця з новим рейтингом
     const riders = ACTIVE_ROUND.riders;
     ['podium1','podium2','podium3','winner'].forEach(id => {
@@ -2513,6 +2542,66 @@ async function adminSaveStandings() {
     showToast('✓ Рейтинг SGP збережено!', 'success');
   } catch(e) {
     if (el) { el.textContent = '❌ ' + e.message; el.className = 'admin-status-msg err'; }
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ─── Замінники / гонщики поза рейтингом ──────────────────────────
+function adminSubsRender() {
+  const wrap = document.getElementById('adminSubsList');
+  if (!wrap) return;
+  if (!SGP_SUBS.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = SGP_SUBS.map((name, i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--admin-border);border-radius:8px;padding:7px 10px">
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:20px">${i+1}.</span>
+      <input class="admin-subs-input" value="${escHtml(name)}" placeholder="ІМ'Я ГОНЩИКА" spellcheck="false"
+        style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:12px;padding:5px 8px;outline:none;text-transform:uppercase">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--red);min-width:36px">+8 пкт</span>
+      <button onclick="adminSubsRemoveRow(${i})" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;line-height:1" title="Видалити">×</button>
+    </div>
+  `).join('');
+}
+
+function adminSubsAddRow() {
+  SGP_SUBS.push('');
+  adminSubsRender();
+  // Фокус на новому полі
+  const inputs = document.querySelectorAll('.admin-subs-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function adminSubsRemoveRow(idx) {
+  SGP_SUBS.splice(idx, 1);
+  adminSubsRender();
+}
+
+async function adminSubsSave() {
+  if (!isAdmin) return;
+  const inputs = document.querySelectorAll('.admin-subs-input');
+  const subs = [...inputs].map(i => i.value.trim().toUpperCase()).filter(Boolean);
+  const statusEl = document.getElementById('adminSubsStatus');
+  if (statusEl) { statusEl.textContent = 'Збереження...'; statusEl.className = 'admin-status-msg'; }
+  try {
+    // Зберігаємо разом з поточним standings
+    await db.collection('config').doc('sgp_standings').set({ standings: SGP_STANDINGS.filter(s => !SGP_SUBS.includes(s)), subs }, { merge: true });
+    SGP_SUBS = subs;
+    // Оновлюємо SGP_STANDINGS — прибираємо старих замінників і додаємо нових
+    SGP_STANDINGS = SGP_STANDINGS.filter(s => !subs.includes(s) && !SGP_SUBS.includes(s));
+    subs.forEach(s => { if (!SGP_STANDINGS.includes(s)) SGP_STANDINGS.push(s); });
+    adminSubsRender();
+    adminRenderStandingsPreview(SGP_STANDINGS);
+    // Оновлюємо дропдауни
+    const riders = ACTIVE_ROUND.riders;
+    ['podium1','podium2','podium3','winner'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      const val = el.value;
+      el.innerHTML = buildRiderOptionsWithPoints(riders);
+      el.value = val;
+    });
+    if (statusEl) { statusEl.textContent = `✓ Збережено ${subs.length} замінників · ` + new Date().toLocaleTimeString('uk-UA'); statusEl.className = 'admin-status-msg ok'; }
+    showToast(`✓ Замінників збережено: ${subs.length || 'немає'}`, 'success');
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = '❌ ' + e.message; statusEl.className = 'admin-status-msg err'; }
     showToast('❌ ' + e.message, 'error');
   }
 }
@@ -2698,18 +2787,6 @@ function showAdminSection(id) {
   document.getElementById(id).classList.add('active');
   const idx = {adminSgp:0, adminSwc:1, adminResults:2, adminLive:3}[id] || 0;
   document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
-  // Перерендеруємо вміст при кожному переключенні
-  if (id === 'adminSgp') {
-    adminRenderRoundSelector();
-    adminRenderBatchPicker();
-    if (adminActiveRoundId) adminLoadRiders();
-    else if (SEASON.rounds.length) adminSelectRound(SEASON.rounds[0].id);
-  }
-  if (id === 'adminSwc') {
-    adminRenderSwcTeamTabs();
-    if (adminActiveSwcTeam) adminLoadSwcTeam();
-    else { const t = Object.keys(SWC_TEAMS)[0]; if (t) adminSelectSwcTeam(t); }
-  }
   if (id === 'adminResults') adminResultsInit();
   if (id === 'adminLive') liveAdminInit();
 }
