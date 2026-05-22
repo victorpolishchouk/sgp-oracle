@@ -1393,6 +1393,8 @@ function rebuildAllSelects() {
 function buildRiderOptions(riders) {
   const main = riders.filter(r => SGP_MAIN_RIDERS.includes(r));
   const reserves = riders.filter(r => SGP_RESERVE_RIDERS.includes(r));
+  // Гонщики що не входять ні в основний склад ні в резерви — замінники
+  const subs = riders.filter(r => !SGP_MAIN_RIDERS.includes(r) && !SGP_RESERVE_RIDERS.includes(r));
   let html = '<option value="">— оберіть —</option>';
   html += '<optgroup label="── Основний склад (1–16) ──">';
   main.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
@@ -1400,6 +1402,11 @@ function buildRiderOptions(riders) {
   if(reserves.length) {
     html += '<optgroup label="── Track Reserves (17–18) ──">';
     reserves.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
+    html += '</optgroup>';
+  }
+  if(subs.length) {
+    html += '<optgroup label="── Замінники · +8 пкт ──">';
+    subs.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
     html += '</optgroup>';
   }
   return html;
