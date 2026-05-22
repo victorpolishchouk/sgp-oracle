@@ -1405,7 +1405,7 @@ function buildRiderOptions(riders) {
     html += '</optgroup>';
   }
   if(subs.length) {
-    html += '<optgroup label="── Замінники · +8 пкт ──">';
+    html += '<optgroup label="── Резерв · +8 пкт ──">';
     subs.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
     html += '</optgroup>';
   }
@@ -2390,7 +2390,7 @@ function adminRenderStandingsPreview(standings) {
   ];
   // Якщо є гонщики не в рейтингу (замінники) — показуємо окремою секцією
   if (notInStandings.length) {
-    groups.push({ label:'+8 пкт', desc:'Поза рейтингом (замінники)', color:'#c084fc', bg:'rgba(192,132,252,.1)', border:'rgba(192,132,252,.3)', riders: notInStandings, isSub: true });
+    groups.push({ label:'+8 пкт', desc:'Поза рейтингом (резерв)', color:'#c084fc', bg:'rgba(192,132,252,.1)', border:'rgba(192,132,252,.3)', riders: notInStandings, isSub: true });
   }
   wrap.innerHTML = groups.filter(g => g.riders.length).map(g => `
     <div style="margin-bottom:10px">
