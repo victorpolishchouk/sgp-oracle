@@ -963,25 +963,25 @@ const SGP_ALL_RIDERS = [...SGP_MAIN_RIDERS, ...SGP_RESERVE_RIDERS];
 const SEASON = {
   year: 2026,
   rounds: [
-    { id:'r02', name:'Landshut GP',          city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00',
+    { id:'r02', name:'Landshut GP',          city:'Landshut, Germany',      date:'2026-05-02', startDatetime:'2026-05-02T19:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r03', name:'Prague GP',            city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00',
+    { id:'r03', name:'Prague GP',            city:'Prague, Czech Republic', date:'2026-05-23', startDatetime:'2026-05-23T19:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r04', name:'Manchester GP (R3)',   city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00',
+    { id:'r04', name:'Manchester GP (R3)',   city:'Manchester, Great Britain',date:'2026-06-05', startDatetime:'2026-06-05T19:30:00+01:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r05', name:'Manchester GP (R4)',   city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00',
+    { id:'r05', name:'Manchester GP (R4)',   city:'Manchester, Great Britain',date:'2026-06-06', startDatetime:'2026-06-06T19:30:00+01:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r06', name:'Wroclaw GP',           city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00',
+    { id:'r06', name:'Wroclaw GP',           city:'Wroclaw, Poland',        date:'2026-06-20', startDatetime:'2026-06-20T19:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r07', name:'Malilla GP',           city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00',
+    { id:'r07', name:'Malilla GP',           city:'Malilla, Sweden',        date:'2026-07-11', startDatetime:'2026-07-11T18:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r08', name:'Lodz GP',              city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00',
+    { id:'r08', name:'Lodz GP',              city:'Lodz, Poland',           date:'2026-08-01', startDatetime:'2026-08-01T19:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r09', name:'Riga GP',              city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00',
+    { id:'r09', name:'Riga GP',              city:'Riga, Latvia',           date:'2026-08-08', startDatetime:'2026-08-08T18:00:00+03:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r10', name:'Vojens GP (R10)',      city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00',
+    { id:'r10', name:'Vojens GP (R10)',      city:'Vojens, Denmark',        date:'2026-09-12', startDatetime:'2026-09-12T18:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
-    { id:'r11', name:'Torun GP',             city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00',
+    { id:'r11', name:'Torun GP',             city:'Torun, Poland',          date:'2026-09-26', startDatetime:'2026-09-26T19:00:00+02:00',
       riders: SGP_ALL_RIDERS, results:null },
   ]
 };
@@ -1761,9 +1761,9 @@ function showToast(msg,type=''){const t=document.getElementById('toast');t.textC
 const COUNTRY_FLAGS={'Poland':'🇵🇱','Australia':'🇦🇺','Great Britain':'🇬🇧','Germany':'🇩🇪','Czech Republic':'🇨🇿','Ukraine':'🇺🇦','Latvia':'🇱🇻','Denmark':'🇩🇰','Norway':'🇳🇴','Sweden':'🇸🇪'};
 const SWC_TEAMS={'Poland':{riders:['ZMARZLIK','KUBERA','DUDEK','WORYNA','KOLODZIEJ']},'Australia':{riders:['HOLDER','FRICKE','DOYLE','LAMBERT']},'Great Britain':{riders:['BEWLEY','THOMSEN','WOFFINDEN','COOK']},'Germany':{riders:['BLODORN','WOLBERT','GROBAUER','ERNST']},'Czech Republic':{riders:['VACULIK','MILIK','CHLUPAC','HAJEK']},'Ukraine':{riders:['PARNITSKYI','TROFIMOV','HNIDENKO','OSTERGAARD']},'Latvia':{riders:['LEBEDEVS','PAVLOVS','LAHNO']},'Denmark':{riders:['MADSEN','JEPSEN JENSEN','PEDERSEN','MICHELSEN']},'Norway':{riders:['BERGE','HJELMSTAD','MYKLEBUST','HEGGEN']},'Sweden':{riders:['LINDGREN','JANSSON','HELLSTROM','GUSTAVSSON']}};
 const SWC_SEASON={year:2026,rounds:[
-  {id:'swc_sf1',name:'Semi-Final 1',city:'Landshut, Germany',date:'2026-05-01',startDatetime:'2026-05-01T18:00:00',format:'semi-final',teams:['Germany','Czech Republic','Great Britain','Ukraine'],qualifiers:1,results:null},
-  {id:'swc_sf2',name:'Semi-Final 2',city:'Riga, Latvia',date:'2026-08-07',startDatetime:'2026-08-07T18:00:00',format:'semi-final',teams:['Latvia','Denmark','Norway','Sweden'],qualifiers:1,results:null},
-  {id:'swc_final',name:'Final',city:'Warsaw, Poland',date:'2026-08-29',startDatetime:'2026-08-29T18:00:00',format:'final',teamsBase:['Poland','Australia'],get teams(){const r1=SWC_SEASON.rounds[0],r2=SWC_SEASON.rounds[1];return['Poland','Australia',r1?.results?.qualified||'Winner SF1',r2?.results?.qualified||'Winner SF2'];},qualifiers:0,results:null}
+  {id:'swc_sf1',name:'Semi-Final 1',city:'Landshut, Germany',date:'2026-05-01',startDatetime:'2026-05-01T18:00:00+02:00',format:'semi-final',teams:['Germany','Czech Republic','Great Britain','Ukraine'],qualifiers:1,results:null},
+  {id:'swc_sf2',name:'Semi-Final 2',city:'Riga, Latvia',date:'2026-08-07',startDatetime:'2026-08-07T18:00:00+03:00',format:'semi-final',teams:['Latvia','Denmark','Norway','Sweden'],qualifiers:1,results:null},
+  {id:'swc_final',name:'Final',city:'Warsaw, Poland',date:'2026-08-29',startDatetime:'2026-08-29T18:00:00+02:00',format:'final',teamsBase:['Poland','Australia'],get teams(){const r1=SWC_SEASON.rounds[0],r2=SWC_SEASON.rounds[1];return['Poland','Australia',r1?.results?.qualified||'Winner SF1',r2?.results?.qualified||'Winner SF2'];},qualifiers:0,results:null}
 ]};
 let SWC_ACTIVE_ROUND=SWC_SEASON.rounds[0];
 let swcRaceLocked=false;
