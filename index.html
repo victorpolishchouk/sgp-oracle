@@ -1405,7 +1405,7 @@ function buildRiderOptions(riders) {
     html += '</optgroup>';
   }
   if(subs.length) {
-    html += '<optgroup label="── Резерв · +8 пкт ──">';
+    html += '<optgroup label="── Резерв ──">';
     subs.forEach(r => { html += `<option value="${escHtml(r)}">${escHtml(r)}</option>`; });
     html += '</optgroup>';
   }
