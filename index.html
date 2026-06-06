@@ -187,6 +187,7 @@
     .lb-breakdown{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
     .lb-chip{font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--text2)}
     .lb-chip.has-pts{color:var(--green);border-color:rgba(48,209,88,.25);background:rgba(48,209,88,.07)}
+    .lb-chip-detail{color:rgba(48,209,88,.7);font-size:9px;margin-left:3px;opacity:.85}
     .lb-score{font-family:var(--font-head);font-size:32px;font-weight:900;color:var(--accent);text-align:right;line-height:1;white-space:nowrap}
     .lb-score-lbl{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right}
 
@@ -1014,25 +1015,39 @@ function getPodiumPoints(riderName, standings) {
 // ─── Scoring ─────────────────────────────────────────────────
 // standings — опціональний зріз рейтингу (якщо не переданий — використовує глобальний SGP_STANDINGS)
 function calcScore(pred, results, standings) {
-  if (!pred||!results) return {score:0,breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0}};
-  const st = standings || null; // null → getPodiumPoints використає глобальний SGP_STANDINGS
-  let score=0; const breakdown={};
+  if (!pred||!results) return {score:0,breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0},details:{top2:[],top8:[],loser:null,podium:[],winner:null}};
+  const st = standings || null;
+  let score=0; const breakdown={}; const details={top2:[],top8:[],loser:null,podium:[],winner:null};
   let t2=0;
-  [pred.top2_1,pred.top2_2].forEach(r=>{ if(!r)return; if(results.top8.includes(r))t2+=1; if(results.top2.includes(r))t2+=3; });
+  [pred.top2_1,pred.top2_2].forEach(r=>{
+    if(!r)return;
+    let pts=0;
+    if(results.top8.includes(r)) pts+=1;
+    if(results.top2.includes(r)) pts+=3;
+    if(pts>0) details.top2.push({name:r,pts});
+    t2+=pts;
+  });
   breakdown.top2=t2; score+=t2;
   let t8=0;
-  [pred.top8_1,pred.top8_2,pred.top8_3,pred.top8_4,pred.top8_5,pred.top8_6].forEach(r=>{ if(r&&results.top8.includes(r))t8++; });
+  [pred.top8_1,pred.top8_2,pred.top8_3,pred.top8_4,pred.top8_5,pred.top8_6].forEach(r=>{
+    if(r&&results.top8.includes(r)){ t8++; details.top8.push({name:r,pts:1}); }
+  });
   breakdown.top8=t8; score+=t8;
   let lp=0;
-  if(pred.loser&&pred.loser===results.loser){ lp++; if(results.loserIncident)lp++; }
+  if(pred.loser&&pred.loser===results.loser){
+    lp++; if(results.loserIncident)lp++;
+    details.loser={name:pred.loser,pts:lp};
+  }
   breakdown.loser=lp; score+=lp;
   let pp=0;
-  [pred.podium1,pred.podium2,pred.podium3].forEach(r=>{ if(r&&results.podium.includes(r))pp+=getPodiumPoints(r,st); });
+  [pred.podium1,pred.podium2,pred.podium3].forEach(r=>{
+    if(r&&results.podium.includes(r)){const pts=getPodiumPoints(r,st); pp+=pts; details.podium.push({name:r,pts});}
+  });
   breakdown.podium=pp; score+=pp;
   let wp=0;
-  if(pred.winner&&pred.winner===results.winner) wp=getPodiumPoints(pred.winner,st);
+  if(pred.winner&&pred.winner===results.winner){ wp=getPodiumPoints(pred.winner,st); details.winner={name:pred.winner,pts:wp}; }
   breakdown.winner=wp; score+=wp;
-  return {score,breakdown};
+  return {score,breakdown,details};
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1681,7 +1696,7 @@ async function renderLeaderboard() {
     const scored=snap.docs.map(doc=>{
       const d=doc.data();
       if(frozen && frozen[doc.id] !== undefined){
-        return {uid:doc.id,...d,score:frozen[doc.id].score,breakdown:frozen[doc.id].breakdown||{}};
+        return {uid:doc.id,...d,score:frozen[doc.id].score,breakdown:frozen[doc.id].breakdown||{},details:frozen[doc.id].details||{}};
       }
       // Якщо фриз відсутній — рахуємо на льоту з standings цього раунду
       return {uid:doc.id,...d,...calcScore(d,R,frozenSt)};
@@ -1693,8 +1708,17 @@ async function renderLeaderboard() {
       const isMe=currentUser&&p.uid===currentUser.uid;
       const rankColor=rank===1?'var(--accent)':rank===2?'#c0c0c0':rank===3?'#cd7f32':'var(--muted)';
       const bd=p.breakdown||{};
-      const chips=[{k:'Топ 2',v:bd.top2,max:8},{k:'Топ 8',v:bd.top8,max:6},{k:'Невдача',v:bd.loser,max:2},{k:'Подіум',v:bd.podium,max:24},{k:'Переможець',v:bd.winner,max:8}]
-        .map(c=>`<span class="lb-chip ${c.v>0?'has-pts':''}">${c.k}: ${c.v??0}</span>`).join('');
+      const dt=p.details||{};
+      function detailHint(items){ return items&&items.length ? ' · '+items.map(x=>`${x.name} +${x.pts}`).join(', ') : ''; }
+      const loserHint = dt.loser ? ` · ${dt.loser.name} +${dt.loser.pts}` : '';
+      const winnerHint = dt.winner ? ` · ${dt.winner.name} +${dt.winner.pts}` : '';
+      const chips=[
+        {k:'Топ 2', v:bd.top2,  max:8,  hint:detailHint(dt.top2)},
+        {k:'Топ 8', v:bd.top8,  max:6,  hint:detailHint(dt.top8)},
+        {k:'Невдача',v:bd.loser,max:2,  hint:loserHint},
+        {k:'Подіум', v:bd.podium,max:24,hint:detailHint(dt.podium)},
+        {k:'Переможець',v:bd.winner,max:8,hint:winnerHint}
+      ].map(c=>`<span class="lb-chip ${c.v>0?'has-pts':''}">${c.k}: ${c.v??0}${c.v>0?`<span class="lb-chip-detail">${c.hint}</span>`:''}</span>`).join('');
       return `<div class="lb-row ${rank<=3?'rank-'+rank:''} ${isMe?'me':''}"><div class="lb-rank" style="color:${rankColor}">${rank<=3?emoji[rank-1]:rank+'.'}</div><div class="lb-info"><div class="lb-nick">${escHtml(p.nickname||'—')}${isMe?' <span style="font-size:11px;color:var(--accent);font-family:var(--font-mono)">(ти)</span>':''}</div><div class="lb-breakdown">${chips}</div></div><div><div class="lb-score">${p.score}</div><div class="lb-score-lbl">балів</div></div></div>`;
     }).join('');
   } catch(e){ list.innerHTML=`<div style="color:var(--red);padding:20px;font-family:var(--font-mono);font-size:12px">Помилка: ${escHtml(e.message)}</div>`; }
@@ -2392,8 +2416,8 @@ async function adminSaveSgpResult() {
       const frozenScores = {};
       predSnap.docs.forEach(doc => {
         // Передаємо standings щоб бали були прив'язані до рейтингу цього раунду
-        const { score, breakdown } = calcScore(doc.data(), results, standingsSnapshot);
-        frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
+        const { score, breakdown, details } = calcScore(doc.data(), results, standingsSnapshot);
+        frozenScores[doc.id] = { score, breakdown, details, nickname: doc.data().nickname || '—' };
       });
       // Зберігаємо в config/sgp_results як {roundId}_scores: {...}
       await db.collection('config').doc('sgp_results').set(
@@ -2646,8 +2670,8 @@ async function adminRefreezeScores() {
     const frozenScores = {};
     predSnap.docs.forEach(doc => {
       // Передаємо standings конкретно для цього раунду
-      const { score, breakdown } = calcScore(doc.data(), round.results, standingsToUse);
-      frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
+      const { score, breakdown, details } = calcScore(doc.data(), round.results, standingsToUse);
+      frozenScores[doc.id] = { score, breakdown, details, nickname: doc.data().nickname || '—' };
     });
     await db.collection('config').doc('sgp_results').set(
       { [adminResRoundId + '_scores']: frozenScores, [adminResRoundId + '_standings']: standingsToUse },
