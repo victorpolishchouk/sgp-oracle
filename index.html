@@ -994,16 +994,17 @@ let ACTIVE_ROUND = SEASON.rounds.find(r=>!r.results) || SEASON.rounds[SEASON.rou
 // Завантажується з Firestore config/sgp_standings, fallback — SGP_MAIN_RIDERS
 let SGP_STANDINGS = [...SGP_MAIN_RIDERS]; // default fallback
 
-function getRiderStandingRank(riderName) {
+function getRiderStandingRank(riderName, standings) {
   // Повертає позицію гонщика в рейтингу (1-16), або 16 якщо не знайдено
+  const st = standings || SGP_STANDINGS;
   if (!riderName) return 16;
-  const idx = SGP_STANDINGS.findIndex(r => r === riderName);
+  const idx = st.findIndex(r => r === riderName);
   return idx >= 0 ? idx + 1 : 16;
 }
 
-function getPodiumPoints(riderName) {
+function getPodiumPoints(riderName, standings) {
   // Нараховує бали за рейтингом гонщика
-  const rank = getRiderStandingRank(riderName);
+  const rank = getRiderStandingRank(riderName, standings);
   if (rank <= 3)  return 2;
   if (rank <= 6)  return 4;
   if (rank <= 9)  return 6;
@@ -1011,8 +1012,10 @@ function getPodiumPoints(riderName) {
 }
 
 // ─── Scoring ─────────────────────────────────────────────────
-function calcScore(pred, results) {
+// standings — опціональний зріз рейтингу (якщо не переданий — використовує глобальний SGP_STANDINGS)
+function calcScore(pred, results, standings) {
   if (!pred||!results) return {score:0,breakdown:{top2:0,top8:0,loser:0,podium:0,winner:0}};
+  const st = standings || null; // null → getPodiumPoints використає глобальний SGP_STANDINGS
   let score=0; const breakdown={};
   let t2=0;
   [pred.top2_1,pred.top2_2].forEach(r=>{ if(!r)return; if(results.top8.includes(r))t2+=1; if(results.top2.includes(r))t2+=3; });
@@ -1024,10 +1027,10 @@ function calcScore(pred, results) {
   if(pred.loser&&pred.loser===results.loser){ lp++; if(results.loserIncident)lp++; }
   breakdown.loser=lp; score+=lp;
   let pp=0;
-  [pred.podium1,pred.podium2,pred.podium3].forEach(r=>{ if(r&&results.podium.includes(r))pp+=getPodiumPoints(r); });
+  [pred.podium1,pred.podium2,pred.podium3].forEach(r=>{ if(r&&results.podium.includes(r))pp+=getPodiumPoints(r,st); });
   breakdown.podium=pp; score+=pp;
   let wp=0;
-  if(pred.winner&&pred.winner===results.winner) wp=getPodiumPoints(pred.winner);
+  if(pred.winner&&pred.winner===results.winner) wp=getPodiumPoints(pred.winner,st);
   breakdown.winner=wp; score+=wp;
   return {score,breakdown};
 }
@@ -1279,10 +1282,14 @@ async function loadSgpResultsConfig() {
         if (data.hasOwnProperty(r.id)) {
           r.results = data[r.id] || null;
         }
-        // Load frozen scores if available: {uid: {score, breakdown, nickname}}
+        // Load frozen scores + standings snapshot if available
         const scoresKey = r.id + '_scores';
+        const standingsKey = r.id + '_standings';
         if (data.hasOwnProperty(scoresKey)) {
           r.frozenScores = data[scoresKey] || null;
+        }
+        if (data.hasOwnProperty(standingsKey)) {
+          r.frozenStandings = data[standingsKey] || null;
         }
       });
     }
@@ -1670,12 +1677,14 @@ async function renderLeaderboard() {
     if(countEl)countEl.textContent=snap.size+' учасників';
     if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів немає</div>';return;}
     const frozen = ACTIVE_ROUND.frozenScores || null;
+    const frozenSt = ACTIVE_ROUND.frozenStandings || null;
     const scored=snap.docs.map(doc=>{
       const d=doc.data();
       if(frozen && frozen[doc.id] !== undefined){
         return {uid:doc.id,...d,score:frozen[doc.id].score,breakdown:frozen[doc.id].breakdown||{}};
       }
-      return {uid:doc.id,...d,...calcScore(d,R)};
+      // Якщо фриз відсутній — рахуємо на льоту з standings цього раунду
+      return {uid:doc.id,...d,...calcScore(d,R,frozenSt)};
     }).sort((a,b)=>b.score-a.score);
     const emoji=['🥇','🥈','🥉'];
     let prevScore=null,rank=0,display=0;
@@ -1703,11 +1712,12 @@ async function renderSeasonStandings() {
     for(const round of completed){
       const snap=await db.collection('predictions').doc(round.id).collection('users').get();
       const frozen = round.frozenScores || null;
+      const frozenSt = round.frozenStandings || null;
       snap.docs.forEach(doc=>{
         const p=doc.data();
         if(!userMap[doc.id])userMap[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,roundCount:0};
-        // Використовуємо заморожені бали якщо є, інакше рахуємо на льоту
-        const score = (frozen && frozen[doc.id] !== undefined) ? frozen[doc.id].score : calcScore(p, round.results).score;
+        // Використовуємо заморожені бали якщо є, інакше рахуємо на льоту з standings цього раунду
+        const score = (frozen && frozen[doc.id] !== undefined) ? frozen[doc.id].score : calcScore(p, round.results, frozenSt).score;
         userMap[doc.id].rounds[round.id]=score;
         userMap[doc.id].total+=score;
         userMap[doc.id].roundCount++;
@@ -2381,7 +2391,8 @@ async function adminSaveSgpResult() {
       const standingsSnapshot = [...SGP_STANDINGS];
       const frozenScores = {};
       predSnap.docs.forEach(doc => {
-        const { score, breakdown } = calcScore(doc.data(), results);
+        // Передаємо standings щоб бали були прив'язані до рейтингу цього раунду
+        const { score, breakdown } = calcScore(doc.data(), results, standingsSnapshot);
         frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
       });
       // Зберігаємо в config/sgp_results як {roundId}_scores: {...}
@@ -2619,21 +2630,31 @@ async function adminRefreezeScores() {
     showToast('⚠️ Спочатку збережіть результат раунду', 'error');
     return;
   }
-  if (!confirm(`Перерахувати і заморозити бали для раунду "${round.name}" за поточним рейтингом?\nЦе перезапише існуючі заморожені бали.`)) return;
+  if (!confirm(`Перерахувати і заморозити бали для раунду "${round.name}".\n\nБУДЬ УВАЖНИЙ: рейтинг гонщиків має бути виставлений для цього раунду до натискання фризу.\n\nПродовжити?`)) return;
   adminSetResStatus('Заморожування балів...');
   try {
+    // Завантажуємо актуальний doc щоб перевірити збережений standings для цього раунду
+    const configSnap = await db.collection('config').doc('sgp_results').get();
+    const configData = configSnap.exists ? configSnap.data() : {};
+    const savedStandings = configData[adminResRoundId + '_standings'];
+
+    // Використовуємо збережений standings якщо є, інакше поточний SGP_STANDINGS
+    const standingsToUse = (savedStandings && savedStandings.length > 0) ? savedStandings : [...SGP_STANDINGS];
+
     const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
     if (predSnap.empty) { adminSetResStatus('Прогнозів немає — нема чого заморожувати', false); return; }
-    const standingsSnapshot = [...SGP_STANDINGS];
     const frozenScores = {};
     predSnap.docs.forEach(doc => {
-      const { score, breakdown } = calcScore(doc.data(), round.results);
+      // Передаємо standings конкретно для цього раунду
+      const { score, breakdown } = calcScore(doc.data(), round.results, standingsToUse);
       frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
     });
     await db.collection('config').doc('sgp_results').set(
-      { [adminResRoundId + '_scores']: frozenScores, [adminResRoundId + '_standings']: standingsSnapshot },
+      { [adminResRoundId + '_scores']: frozenScores, [adminResRoundId + '_standings']: standingsToUse },
       { merge: true }
     );
+    // Оновлюємо in-memory
+    round.frozenScores = frozenScores;
     const cnt = Object.keys(frozenScores).length;
     adminSetResStatus(`✓ Заморожено ${cnt} балів · ` + new Date().toLocaleTimeString('uk-UA'), true);
     showToast(`✓ Бали ${cnt} учасників заморожено!`, 'success');
