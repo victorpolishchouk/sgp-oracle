@@ -1279,6 +1279,11 @@ async function loadSgpResultsConfig() {
         if (data.hasOwnProperty(r.id)) {
           r.results = data[r.id] || null;
         }
+        // Load frozen scores if available: {uid: {score, breakdown, nickname}}
+        const scoresKey = r.id + '_scores';
+        if (data.hasOwnProperty(scoresKey)) {
+          r.frozenScores = data[scoresKey] || null;
+        }
       });
     }
   } catch(e) { console.warn('loadSgpResultsConfig:', e.message); }
@@ -1664,7 +1669,14 @@ async function renderLeaderboard() {
     const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').get();
     if(countEl)countEl.textContent=snap.size+' учасників';
     if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів немає</div>';return;}
-    const scored=snap.docs.map(doc=>{const d=doc.data();if(d.finalScore!==undefined){return {uid:doc.id,...d,score:d.finalScore,breakdown:d.finalBreakdown||{}};}return {uid:doc.id,...d,...calcScore(d,R)};}).sort((a,b)=>b.score-a.score);
+    const frozen = ACTIVE_ROUND.frozenScores || null;
+    const scored=snap.docs.map(doc=>{
+      const d=doc.data();
+      if(frozen && frozen[doc.id] !== undefined){
+        return {uid:doc.id,...d,score:frozen[doc.id].score,breakdown:frozen[doc.id].breakdown||{}};
+      }
+      return {uid:doc.id,...d,...calcScore(d,R)};
+    }).sort((a,b)=>b.score-a.score);
     const emoji=['🥇','🥈','🥉'];
     let prevScore=null,rank=0,display=0;
     list.innerHTML=scored.map(p=>{
@@ -1690,11 +1702,12 @@ async function renderSeasonStandings() {
     const userMap={};
     for(const round of completed){
       const snap=await db.collection('predictions').doc(round.id).collection('users').get();
+      const frozen = round.frozenScores || null;
       snap.docs.forEach(doc=>{
         const p=doc.data();
         if(!userMap[doc.id])userMap[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,roundCount:0};
         // Використовуємо заморожені бали якщо є, інакше рахуємо на льоту
-        const score = p.finalScore !== undefined ? p.finalScore : calcScore(p, round.results).score;
+        const score = (frozen && frozen[doc.id] !== undefined) ? frozen[doc.id].score : calcScore(p, round.results).score;
         userMap[doc.id].rounds[round.id]=score;
         userMap[doc.id].total+=score;
         userMap[doc.id].roundCount++;
@@ -2361,22 +2374,21 @@ async function adminSaveSgpResult() {
     // Update ACTIVE_ROUND
     ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
 
-    // ── Freeze scores: розрахувати і зберегти finalScore для всіх юзерів ──
+    // ── Freeze scores: зберігаємо бали в config/sgp_results (де адмін має права) ──
     adminSetResStatus('Заморожування балів...');
     try {
       const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
-      const standingsSnapshot = [...SGP_STANDINGS]; // зріз рейтингу на момент розрахунку
-      const batch = db.batch();
+      const standingsSnapshot = [...SGP_STANDINGS];
+      const frozenScores = {};
       predSnap.docs.forEach(doc => {
         const { score, breakdown } = calcScore(doc.data(), results);
-        batch.update(doc.ref, {
-          finalScore: score,
-          finalBreakdown: breakdown,
-          standingsSnapshot,
-          scoredAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
       });
-      await batch.commit();
+      // Зберігаємо в config/sgp_results як {roundId}_scores: {...}
+      await db.collection('config').doc('sgp_results').set(
+        { [adminResRoundId + '_scores']: frozenScores, [adminResRoundId + '_standings']: standingsSnapshot },
+        { merge: true }
+      );
       adminSetResStatus(`✓ Збережено · ${predSnap.size} балів заморожено · ` + new Date().toLocaleTimeString('uk-UA'), true);
       showToast(`✓ Результат збережено! Бали ${predSnap.size} учасників зафіксовано.`, 'success');
     } catch(scoreErr) {
@@ -2401,19 +2413,13 @@ async function adminClearSgpResult() {
     const r = SEASON.rounds.find(x => x.id === adminResRoundId);
     if (r) r.results = null;
     ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
-    // Clear frozen scores from all prediction docs for this round
+    // Clear frozen scores from config/sgp_results
     try {
-      const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
-      const batch = db.batch();
-      predSnap.docs.forEach(doc => {
-        batch.update(doc.ref, {
-          finalScore: firebase.firestore.FieldValue.delete(),
-          finalBreakdown: firebase.firestore.FieldValue.delete(),
-          standingsSnapshot: firebase.firestore.FieldValue.delete(),
-          scoredAt: firebase.firestore.FieldValue.delete()
-        });
-      });
-      await batch.commit();
+      await db.collection('config').doc('sgp_results').set(
+        { [adminResRoundId + '_scores']: firebase.firestore.FieldValue.delete(),
+          [adminResRoundId + '_standings']: firebase.firestore.FieldValue.delete() },
+        { merge: true }
+      );
     } catch(e2) { console.warn('Не вдалось очистити заморожені бали:', e2.message); }
     adminLoadSgpResult();
     adminResRenderRoundSelector();
@@ -2619,19 +2625,16 @@ async function adminRefreezeScores() {
     const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
     if (predSnap.empty) { adminSetResStatus('Прогнозів немає — нема чого заморожувати', false); return; }
     const standingsSnapshot = [...SGP_STANDINGS];
-    const batch = db.batch();
-    let cnt = 0;
+    const frozenScores = {};
     predSnap.docs.forEach(doc => {
       const { score, breakdown } = calcScore(doc.data(), round.results);
-      batch.update(doc.ref, {
-        finalScore: score,
-        finalBreakdown: breakdown,
-        standingsSnapshot,
-        scoredAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      cnt++;
+      frozenScores[doc.id] = { score, breakdown, nickname: doc.data().nickname || '—' };
     });
-    await batch.commit();
+    await db.collection('config').doc('sgp_results').set(
+      { [adminResRoundId + '_scores']: frozenScores, [adminResRoundId + '_standings']: standingsSnapshot },
+      { merge: true }
+    );
+    const cnt = Object.keys(frozenScores).length;
     adminSetResStatus(`✓ Заморожено ${cnt} балів · ` + new Date().toLocaleTimeString('uk-UA'), true);
     showToast(`✓ Бали ${cnt} учасників заморожено!`, 'success');
   } catch(e) {
