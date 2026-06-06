@@ -786,8 +786,9 @@
 
         <div class="admin-action-row">
           <span class="admin-status-msg" id="adminResStatus"></span>
-          <div style="display:flex;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer" onclick="adminLoadSgpResult()">↺ Скасувати</button>
+            <button style="padding:10px 18px;font-size:13px;border-radius:8px;border:1px solid var(--accent2);background:transparent;color:var(--accent2);cursor:pointer" onclick="adminRefreezeScores()" title="Перерахувати і заморозити бали для поточного рейтингу">🔄 Заморозити бали</button>
             <button class="btn-admin" onclick="adminSaveSgpResult()">💾 Зберегти результат SGP</button>
           </div>
         </div>
@@ -1663,7 +1664,7 @@ async function renderLeaderboard() {
     const snap=await db.collection('predictions').doc(ACTIVE_ROUND.id).collection('users').get();
     if(countEl)countEl.textContent=snap.size+' учасників';
     if(snap.empty){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-mono);font-size:12px">Прогнозів немає</div>';return;}
-    const scored=snap.docs.map(doc=>({uid:doc.id,...doc.data(),...calcScore(doc.data(),R)})).sort((a,b)=>b.score-a.score);
+    const scored=snap.docs.map(doc=>{const d=doc.data();if(d.finalScore!==undefined){return {uid:doc.id,...d,score:d.finalScore,breakdown:d.finalBreakdown||{}};}return {uid:doc.id,...d,...calcScore(d,R)};}).sort((a,b)=>b.score-a.score);
     const emoji=['🥇','🥈','🥉'];
     let prevScore=null,rank=0,display=0;
     list.innerHTML=scored.map(p=>{
@@ -1692,7 +1693,8 @@ async function renderSeasonStandings() {
       snap.docs.forEach(doc=>{
         const p=doc.data();
         if(!userMap[doc.id])userMap[doc.id]={nickname:p.nickname||'—',uid:doc.id,rounds:{},total:0,roundCount:0};
-        const {score}=calcScore(p,round.results);
+        // Використовуємо заморожені бали якщо є, інакше рахуємо на льоту
+        const score = p.finalScore !== undefined ? p.finalScore : calcScore(p, round.results).score;
         userMap[doc.id].rounds[round.id]=score;
         userMap[doc.id].total+=score;
         userMap[doc.id].roundCount++;
@@ -2358,8 +2360,30 @@ async function adminSaveSgpResult() {
     if (r) r.results = results;
     // Update ACTIVE_ROUND
     ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
-    adminSetResStatus('✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'), true);
-    showToast('✓ Результат SGP збережено!', 'success');
+
+    // ── Freeze scores: розрахувати і зберегти finalScore для всіх юзерів ──
+    adminSetResStatus('Заморожування балів...');
+    try {
+      const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
+      const standingsSnapshot = [...SGP_STANDINGS]; // зріз рейтингу на момент розрахунку
+      const batch = db.batch();
+      predSnap.docs.forEach(doc => {
+        const { score, breakdown } = calcScore(doc.data(), results);
+        batch.update(doc.ref, {
+          finalScore: score,
+          finalBreakdown: breakdown,
+          standingsSnapshot,
+          scoredAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+      adminSetResStatus(`✓ Збережено · ${predSnap.size} балів заморожено · ` + new Date().toLocaleTimeString('uk-UA'), true);
+      showToast(`✓ Результат збережено! Бали ${predSnap.size} учасників зафіксовано.`, 'success');
+    } catch(scoreErr) {
+      adminSetResStatus('✓ Результат збережено, але помилка заморозки балів: ' + scoreErr.message, false, true);
+      showToast('⚠️ Результат збережено, але бали не заморожено: ' + scoreErr.message, 'error');
+    }
+
     adminResRenderRoundSelector();
     // Refresh leaderboard/results display if currently shown
     renderRoundSelector();
@@ -2371,16 +2395,30 @@ async function adminSaveSgpResult() {
 
 async function adminClearSgpResult() {
   if (!isAdmin) return;
-  if (!confirm('Видалити результат цього раунду? Всі бали будуть перераховані.')) return;
+  if (!confirm('Видалити результат цього раунду? Заморожені бали учасників також будуть скинуті.')) return;
   try {
     await db.collection('config').doc('sgp_results').set({ [adminResRoundId]: null }, { merge: true });
     const r = SEASON.rounds.find(x => x.id === adminResRoundId);
     if (r) r.results = null;
     ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
+    // Clear frozen scores from all prediction docs for this round
+    try {
+      const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
+      const batch = db.batch();
+      predSnap.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          finalScore: firebase.firestore.FieldValue.delete(),
+          finalBreakdown: firebase.firestore.FieldValue.delete(),
+          standingsSnapshot: firebase.firestore.FieldValue.delete(),
+          scoredAt: firebase.firestore.FieldValue.delete()
+        });
+      });
+      await batch.commit();
+    } catch(e2) { console.warn('Не вдалось очистити заморожені бали:', e2.message); }
     adminLoadSgpResult();
     adminResRenderRoundSelector();
     renderRoundSelector();
-    showToast('Результат видалено', 'success');
+    showToast('Результат та заморожені бали видалено', 'success');
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
@@ -2558,14 +2596,49 @@ async function adminSaveStandings() {
       el.innerHTML = buildRiderOptionsWithPoints(riders);
       el.value = val;
     });
-    if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA'); el.className = 'admin-status-msg ok'; }
-    showToast('✓ Рейтинг SGP збережено!', 'success');
+    if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA') + ' · Попередні заморожені бали НЕ змінені'; el.className = 'admin-status-msg ok'; }
+    showToast('✓ Рейтинг збережено! Заморожені бали минулих раундів не змінені.', 'success');
   } catch(e) {
     if (el) { el.textContent = '❌ ' + e.message; el.className = 'admin-status-msg err'; }
     showToast('❌ ' + e.message, 'error');
   }
 }
 
+
+// ─── Refreeze scores for already-saved round ──────────────────
+async function adminRefreezeScores() {
+  if (!isAdmin) return;
+  const round = SEASON.rounds.find(x => x.id === adminResRoundId);
+  if (!round || !round.results) {
+    showToast('⚠️ Спочатку збережіть результат раунду', 'error');
+    return;
+  }
+  if (!confirm(`Перерахувати і заморозити бали для раунду "${round.name}" за поточним рейтингом?\nЦе перезапише існуючі заморожені бали.`)) return;
+  adminSetResStatus('Заморожування балів...');
+  try {
+    const predSnap = await db.collection('predictions').doc(adminResRoundId).collection('users').get();
+    if (predSnap.empty) { adminSetResStatus('Прогнозів немає — нема чого заморожувати', false); return; }
+    const standingsSnapshot = [...SGP_STANDINGS];
+    const batch = db.batch();
+    let cnt = 0;
+    predSnap.docs.forEach(doc => {
+      const { score, breakdown } = calcScore(doc.data(), round.results);
+      batch.update(doc.ref, {
+        finalScore: score,
+        finalBreakdown: breakdown,
+        standingsSnapshot,
+        scoredAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      cnt++;
+    });
+    await batch.commit();
+    adminSetResStatus(`✓ Заморожено ${cnt} балів · ` + new Date().toLocaleTimeString('uk-UA'), true);
+    showToast(`✓ Бали ${cnt} учасників заморожено!`, 'success');
+  } catch(e) {
+    adminSetResStatus('❌ Помилка: ' + e.message, false, true);
+    showToast('❌ ' + e.message, 'error');
+  }
+}
 
 function adminSetResStatus(msg, ok=false, err=false) {
   const el = document.getElementById('adminResStatus');
