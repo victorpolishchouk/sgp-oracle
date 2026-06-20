@@ -1809,6 +1809,8 @@ function renderSavedGrid(p) {
 function showTab(id) {
   ['tabMyPred','tabAllPreds','tabResults','tabSeason'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=t===id?'':'none';});
   document.querySelectorAll('#screenMain>.nav-tabs .nav-tab').forEach(btn=>{const t=btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];btn.classList.toggle('active',t===id);});
+  // При відкритті вкладки прогнозу — завжди перебудовуємо селекти з актуальним SGP_STANDINGS
+  if(id==='tabMyPred' && ACTIVE_ROUND && ACTIVE_ROUND.riders) populateSelects();
   if(id==='tabAllPreds')renderAllPredictions();
   if(id==='tabResults'){renderOfficialResults();renderLeaderboard();}
   if(id==='tabSeason')renderSeasonStandings();
@@ -2625,13 +2627,17 @@ async function adminSaveStandings() {
     await db.collection('config').doc('sgp_standings').set({ standings });
     SGP_STANDINGS = standings;
     adminRenderStandingsPreview(standings);
-    const riders = ACTIVE_ROUND.riders;
-    ['podium1','podium2','podium3','winner'].forEach(id => {
-      const el = document.getElementById(id); if (!el) return;
-      const val = el.value;
-      el.innerHTML = buildRiderOptionsWithPoints(riders);
-      el.value = val;
-    });
+    // Оновлюємо селекти форми прогнозу якщо вони є в DOM,
+    // інакше populateSelects() підхопить новий SGP_STANDINGS при відкритті вкладки
+    const riders = ACTIVE_ROUND && ACTIVE_ROUND.riders;
+    if (riders) {
+      ['podium1','podium2','podium3','winner'].forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        const val = el.value;
+        el.innerHTML = buildRiderOptionsWithPoints(riders);
+        el.value = val;
+      });
+    }
     if (el) { el.textContent = '✓ Збережено · ' + new Date().toLocaleTimeString('uk-UA') + ' · Попередні заморожені бали НЕ змінені'; el.className = 'admin-status-msg ok'; }
     showToast('✓ Рейтинг збережено! Заморожені бали минулих раундів не змінені.', 'success');
   } catch(e) {
