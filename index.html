@@ -1229,8 +1229,11 @@ function startRaceCountdown(startMs, roundName) {
     const label = _formatCountdown(startMs);
     if (!label) {
       clearInterval(_raceCountdownTimer);
-      setRaceLockCache(ACTIVE_ROUND.id, true);
-      setRaceLocked(true, 'Старт вже відбувся');
+      // Автоблокування по таймеру лише якщо немає ручного розблокування
+      if (manualLock !== false) {
+        setRaceLockCache(ACTIVE_ROUND.id, true);
+        setRaceLocked(true, 'Старт вже відбувся');
+      }
       return;
     }
     const span = document.querySelector('#raceBanner .race-banner-text span');
@@ -1674,7 +1677,9 @@ function populateSelects() {
 // ═══════════════════════════════════════════════════════════════
 async function savePrediction() {
   const _start = new Date(ACTIVE_ROUND.startDatetime);
-  const _locked = raceLocked || !!ACTIVE_ROUND.results || Date.now() >= _start.getTime();
+  // При ручному розблокуванні (manualLock===false) ігноруємо перевірку часу
+  const _timeExpired = manualLock !== false && Date.now() >= _start.getTime();
+  const _locked = raceLocked || !!ACTIVE_ROUND.results || _timeExpired;
   if(_locked){showToast('🔒 Прогнози заблоковано!','error');return;}
   if(!currentUser){showToast('Спочатку увійдіть','error');return;}
   const d=getPredictionData();
@@ -1706,8 +1711,20 @@ async function loadUserPrediction() {
       const t=mine.savedAt?.toDate?.()?.toLocaleString('uk-UA')||'—';
       document.getElementById('savedTime').textContent='Збережено: '+t;
       renderSavedGrid(mine);
+      // Спочатку заповнюємо селекти гонщиками, потім встановлюємо збережені значення
+      // (порядок критичний: el.value ігнорується якщо <option> ще не існує)
+      populateSelects();
       ['top2_1','top2_2','top8_1','top8_2','top8_3','top8_4','top8_5','top8_6','loser','podium1','podium2','podium3','winner'].forEach(id=>{
-        const el=document.getElementById(id);if(el&&mine[id])el.value=mine[id];
+        const el=document.getElementById(id);
+        if(!el||!mine[id])return;
+        el.value=mine[id];
+        // Якщо значення не застосувалось (гонщика немає в поточному списку) — додаємо option динамічно
+        if(el.value!==mine[id]){
+          const opt=document.createElement('option');
+          opt.value=mine[id];opt.textContent=mine[id];
+          el.appendChild(opt);
+          el.value=mine[id];
+        }
       });
       rebuildAllSelects();
       updatePreview();
