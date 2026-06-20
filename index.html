@@ -1299,12 +1299,15 @@ function setBanner(type,title,desc) {
 }
 
 function applyLockToForm() {
-  document.querySelectorAll('.rider-select').forEach(s=>s.disabled=true);
+  // Блокуємо лише селекти форми прогнозу користувача (не адмін-секції)
+  const predForm = document.getElementById('tabMyPred');
+  if (predForm) predForm.querySelectorAll('.rider-select').forEach(s=>s.disabled=true);
   const s=document.getElementById('btnSave'),c=document.getElementById('btnClear');
   if(s){s.disabled=true;s.textContent='🔒 ЗАБЛОКОВАНО';}
   if(c)c.disabled=true;
-  document.getElementById('submitZoneTitle').textContent='🔒 Прийом закрито';
-  document.getElementById('submitZoneDesc').textContent='Гонка вже розпочалась.';
+  const t=document.getElementById('submitZoneTitle'),d=document.getElementById('submitZoneDesc');
+  if(t)t.textContent='🔒 Прийом закрито';
+  if(d)d.textContent='Гонка вже розпочалась.';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1460,7 +1463,9 @@ function adminRenderLockStatus() {
 
 function applyUnlockToForm() {
   if (ACTIVE_ROUND && ACTIVE_ROUND.results) return; // результати — завжди locked
-  document.querySelectorAll('.rider-select').forEach(s => s.disabled = false);
+  // Розблокуємо лише селекти форми прогнозу (не адмін-секції)
+  const predForm = document.getElementById('tabMyPred');
+  if (predForm) predForm.querySelectorAll('.rider-select').forEach(s => s.disabled = false);
   const s = document.getElementById('btnSave'), c = document.getElementById('btnClear');
   if (s) { s.disabled = false; s.textContent = '💾 ЗБЕРЕГТИ'; }
   if (c) c.disabled = false;
@@ -1529,7 +1534,8 @@ function updateActiveRoundHeader() {
 function switchRound(id) {
   ACTIVE_ROUND=SEASON.rounds.find(r=>r.id===id);
   renderRoundSelector(); updateActiveRoundHeader();
-  document.querySelectorAll('.rider-select').forEach(s=>s.disabled=false);
+  const predForm=document.getElementById('tabMyPred');
+  if(predForm)predForm.querySelectorAll('.rider-select').forEach(s=>s.disabled=false);
   const btnSave=document.getElementById('btnSave'),btnClear=document.getElementById('btnClear');
   if(btnSave){btnSave.disabled=false;btnSave.textContent='💾 ЗБЕРЕГТИ';}
   if(btnClear)btnClear.disabled=false;
