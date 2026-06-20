@@ -612,6 +612,7 @@
       <button class="admin-nav-btn" onclick="showAdminSection('adminSwc')">🌍 SWC Команди</button>
       <button class="admin-nav-btn" onclick="showAdminSection('adminResults')">🏁 Результати</button>
       <button class="admin-nav-btn" onclick="showAdminSection('adminLive')">🔴 Live URL</button>
+      <button class="admin-nav-btn" onclick="showAdminSection('adminLock')">🔒 Блокування</button>
     </div>
 
     <!-- SGP RIDERS EDITOR -->
@@ -901,6 +902,46 @@
       </div>
     </div>
 
+    <div class="admin-section" id="adminLock">
+      <div class="admin-info-box">
+        <strong>🔒 Ручне блокування прийому прогнозів</strong><br>
+        Дозволяє заблокувати або відкрити прийом прогнозів незалежно від часу старту гонки. Стан зберігається в Firestore і діє для всіх користувачів одразу.
+      </div>
+
+      <div class="admin-card" style="margin-bottom:20px">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">Статус прийому прогнозів</div>
+            <div class="admin-card-meta" id="adminLockStatusDesc">Завантаження...</div>
+          </div>
+          <div id="adminLockBadge" style="font-family:var(--font-mono);font-size:12px;padding:4px 10px;border-radius:6px;background:var(--surface);color:var(--muted)">—</div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button id="btnManualLock" class="btn-admin" style="background:var(--red);flex:1"
+            onclick="adminSetManualLock(true)">
+            🔒 Заблокувати прогнози
+          </button>
+          <button id="btnManualUnlock" class="btn-admin" style="background:var(--green);flex:1"
+            onclick="adminSetManualLock(false)">
+            🔓 Відкрити прогнози
+          </button>
+        </div>
+        <div style="margin-top:12px">
+          <span class="admin-status-msg" id="adminLockMsg"></span>
+        </div>
+
+        <div style="height:1px;background:var(--border);margin:18px 0"></div>
+
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Важливо</div>
+        <ul style="font-family:var(--font-body);font-size:13px;color:var(--text2);line-height:1.8;padding-left:18px;margin:0">
+          <li>Ручне блокування <strong>має пріоритет</strong> над автоматичним (таймер, live-статус)</li>
+          <li>Ручне <strong>відкриття</strong> тимчасово скасовує автоблокування за таймером — до наступної перевірки</li>
+          <li>Якщо опубліковані офіційні <strong>результати раунду</strong> — форма заблокована завжди</li>
+        </ul>
+      </div>
+    </div>
+
   <footer>
     <p>Дані: <a href="https://fimspeedway.com" target="_blank" rel="noopener">fimspeedway.com</a> · SGP 2026 + SWC 2026 · <span style="color:var(--green)">Firebase</span></p>
     <p id="footerStatus" style="color:var(--muted)"></p>
@@ -1056,6 +1097,7 @@ function calcScore(pred, results, standings) {
 let currentUser  = null;
 let userNickname = '';
 let raceLocked   = false;
+let manualLock   = null; // null = не встановлено, true = заблоковано вручну, false = відкрито вручну
 
 const LOCK_TTL = 24*60*60*1000;
 function getRaceLockCache(rid) {
@@ -1201,6 +1243,15 @@ async function checkRaceStatus() {
   const start=new Date(round.startDatetime);
   const now=Date.now();
   if(round.results){setRaceLocked(true,`Результати опубліковано — ${round.name}`);return;}
+  // Ручне блокування має пріоритет над автоматичним
+  if(manualLock===true){setRaceLocked(true,'🔒 Заблоковано вручну адміном');return;}
+  if(manualLock===false){
+    // Вручну відкрито — пропускаємо кеш і таймер
+    const label=_formatCountdown(start.getTime());
+    setRaceLocked(false,`🔓 Відкрито вручну · до старту ${label}`);
+    startRaceCountdown(start.getTime(), round.name);
+    return;
+  }
   const cached=getRaceLockCache(round.id);
   if(cached===true){setRaceLocked(true,'Заблоковано (кеш)');return;}
   if(now>=start.getTime()){setRaceLockCache(round.id,true);setRaceLocked(true,`Старт вже відбувся`);return;}
@@ -1338,11 +1389,89 @@ async function loadStandingsConfig() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  MANUAL LOCK CONFIG
+// ═══════════════════════════════════════════════════════════════
+async function loadManualLockConfig() {
+  try {
+    const snap = await db.collection('config').doc('manual_lock').get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (typeof data.locked === 'boolean') {
+        manualLock = data.locked;
+      }
+    }
+  } catch(e) { console.warn('loadManualLockConfig:', e.message); }
+}
+
+async function adminSetManualLock(locked) {
+  if (!isAdmin) return;
+  const msgEl = document.getElementById('adminLockMsg');
+  if (msgEl) { msgEl.textContent = 'Збереження...'; msgEl.className = 'admin-status-msg'; }
+  try {
+    const roundId = ACTIVE_ROUND.id;
+    await db.collection('config').doc('manual_lock').set({ locked, roundId, updatedAt: Date.now() });
+    manualLock = locked;
+    adminRenderLockStatus();
+    // Застосовуємо стан одразу
+    if (locked) {
+      setRaceLocked(true, '🔒 Заблоковано вручну адміном');
+      applyLockToForm();
+    } else {
+      // Скидаємо кеш таймера щоб checkRaceStatus міг перевірити заново
+      localStorage.removeItem('sgp_lock_' + roundId);
+      setRaceLocked(false, '🔓 Відкрито вручну адміном');
+      applyUnlockToForm();
+    }
+    if (msgEl) {
+      msgEl.textContent = (locked ? '🔒 Заблоковано' : '🔓 Відкрито') + ' · ' + new Date().toLocaleTimeString('uk-UA');
+      msgEl.className = 'admin-status-msg ok';
+    }
+    showToast(locked ? '🔒 Прогнози заблоковано' : '🔓 Прогнози відкрито', locked ? 'error' : 'success');
+  } catch(e) {
+    if (msgEl) { msgEl.textContent = '❌ ' + e.message; msgEl.className = 'admin-status-msg err'; }
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+function adminRenderLockStatus() {
+  const badge = document.getElementById('adminLockBadge');
+  const desc  = document.getElementById('adminLockStatusDesc');
+  if (!badge || !desc) return;
+  if (manualLock === true) {
+    badge.textContent = '🔒 ЗАБЛОКОВАНО';
+    badge.style.background = 'rgba(255,59,48,.15)';
+    badge.style.color = 'var(--red)';
+    desc.textContent = 'Прийом прогнозів вимкнено вручну';
+  } else if (manualLock === false) {
+    badge.textContent = '🔓 ВІДКРИТО';
+    badge.style.background = 'rgba(48,209,88,.15)';
+    badge.style.color = 'var(--green)';
+    desc.textContent = 'Прийом прогнозів відкрито вручну';
+  } else {
+    badge.textContent = '⚙️ АВТО';
+    badge.style.background = 'var(--surface)';
+    badge.style.color = 'var(--muted)';
+    desc.textContent = 'Керується автоматично (таймер / live-статус)';
+  }
+}
+
+function applyUnlockToForm() {
+  if (ACTIVE_ROUND && ACTIVE_ROUND.results) return; // результати — завжди locked
+  document.querySelectorAll('.rider-select').forEach(s => s.disabled = false);
+  const s = document.getElementById('btnSave'), c = document.getElementById('btnClear');
+  if (s) { s.disabled = false; s.textContent = '💾 ЗБЕРЕГТИ'; }
+  if (c) c.disabled = false;
+  const t = document.getElementById('submitZoneTitle'), d = document.getElementById('submitZoneDesc');
+  if (t) t.textContent = 'Готові до збереження?';
+  if (d) d.textContent = '';
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  APP ENTRY
 // ═══════════════════════════════════════════════════════════════
 async function enterApp() {
   // Завантажуємо кастомні конфіги з Firestore перед рендером
-  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig(), loadSgpResultsConfig(), loadSwcResultsConfig(), loadStandingsConfig()]);
+  await Promise.all([loadRidersConfig(), loadSwcTeamsConfig(), loadSgpResultsConfig(), loadSwcResultsConfig(), loadStandingsConfig(), loadManualLockConfig()]);
 
   // Перераховуємо ACTIVE_ROUND після завантаження результатів
   ACTIVE_ROUND = SEASON.rounds.find(r => !r.results) || SEASON.rounds[SEASON.rounds.length-1];
@@ -2874,6 +3003,7 @@ function adminSetSwcResStatus(msg, ok=false, err=false) {
 function showAdminSection(id) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+  if (id === 'adminLock') adminRenderLockStatus();
   document.getElementById(id).classList.add('active');
   const idx = {adminSgp:0, adminSwc:1, adminResults:2, adminLive:3}[id] || 0;
   document.querySelectorAll('.admin-nav-btn')[idx].classList.add('active');
