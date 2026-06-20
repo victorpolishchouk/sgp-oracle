@@ -1498,7 +1498,14 @@ function buildRiderOptionsWithPoints(riders) {
     return { name: r, pos: idx >= 0 ? idx + 1 : 0 };
   });
   groups.forEach(g => {
-    const groupRiders = riderData.filter(d => g.check(d.pos));
+    const groupRiders = riderData
+      .filter(d => g.check(d.pos))
+      .sort((a, b) => {
+        if (a.pos === 0 && b.pos === 0) return a.name.localeCompare(b.name);
+        if (a.pos === 0) return 1;
+        if (b.pos === 0) return -1;
+        return a.pos - b.pos;
+      });
     if (!groupRiders.length) return;
     html += `<optgroup label="${g.label}">`;
     groupRiders.forEach(({ name, pos }) => {
